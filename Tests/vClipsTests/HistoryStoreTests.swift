@@ -31,6 +31,15 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertEqual(all.first?.content, "a") // bumped to top by lastUsedAt
     }
 
+    func test_capture_trimsWhitespaceAndDedupesAcrossWhitespaceVariants() throws {
+        let store = try makeStore()
+        store.capture("hello ")
+        store.capture("hello")
+        let all = store.search("")
+        XCTAssertEqual(all.count, 1)
+        XCTAssertEqual(all.first?.content, "hello") // stored trimmed
+    }
+
     func test_search_isCaseInsensitiveSubstring() throws {
         let store = try makeStore()
         store.capture("Hello World")

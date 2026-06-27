@@ -14,13 +14,13 @@ final class HistoryStore {
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        if let existing = firstItem(withContent: content) {
+        if let existing = firstItem(withContent: trimmed) {
             existing.lastUsedAt = Date()
             save()
             return
         }
 
-        context.insert(ClipItem(content: content))
+        context.insert(ClipItem(content: trimmed))
         save()
         cleanup()
     }

@@ -18,6 +18,12 @@ struct vClipsApp: App {
             Button("History (⌘⇧V)") {
                 appDelegate.env.togglePopup()
             }
+            if !AccessibilityPermission.isTrusted {
+                Divider()
+                Button("Grant Accessibility (for auto-paste)…") {
+                    AccessibilityPermission.openSettings()
+                }
+            }
             Divider()
             Button("Quit vClips") { NSApplication.shared.terminate(nil) }
                 .keyboardShortcut("q")

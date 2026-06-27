@@ -1,4 +1,4 @@
-import SwiftUI
+import Combine
 import SwiftData
 
 @MainActor

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import KeyboardShortcuts
 
 @MainActor
 final class AppEnvironment: ObservableObject {
@@ -8,7 +9,6 @@ final class AppEnvironment: ObservableObject {
     let monitor: ClipboardMonitor
     private(set) var paster: Paster!
     private(set) var popup: PopupController!
-    private(set) var hotkey: HotkeyManager!
     private(set) var viewModel: PopupViewModel!
 
     init() {
@@ -28,12 +28,13 @@ final class AppEnvironment: ObservableObject {
             guard let self else { return AnyView(EmptyView()) }
             return AnyView(PopupView(model: self.viewModel, onEscape: { self.popup.hide() }))
         })
-        self.hotkey = HotkeyManager(onTrigger: { [weak self] in self?.togglePopup() })
     }
 
     func start() {
         monitor.start()
-        hotkey.register()
+        KeyboardShortcuts.onKeyDown(for: .togglePopup) { [weak self] in
+            self?.togglePopup()
+        }
         if !AccessibilityPermission.isTrusted {
             AccessibilityPermission.prompt()
         }

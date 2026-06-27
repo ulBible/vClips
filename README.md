@@ -9,13 +9,27 @@ summoned anywhere with ⌘⇧V and auto-pasted into the focused app.
 
 ## Build & run
 ```bash
-./scripts/bundle.sh release
-open build/vClips.app
+./scripts/setup-signing.sh          # once per machine — see "Signing" below
+./scripts/bundle.sh release install  # builds, signs, copies to /Applications
+open /Applications/vClips.app
 ```
 
+## Signing (why a one-time setup)
+macOS ties the Accessibility permission (which powers auto-paste) to the app's
+code-signing identity. Ad-hoc signing produces a *new* identity on every build,
+so the permission silently resets each rebuild and auto-paste stops working
+(copy-only fallback) even though the toggle still looks enabled.
+
+`scripts/setup-signing.sh` creates a stable self-signed "vClips Self Signed"
+identity in your login keychain (once). `bundle.sh` then signs with it, so the
+permission persists across rebuilds. Without it, the build falls back to ad-hoc
+and you must re-grant Accessibility after every rebuild.
+
 ## First run
-1. Grant Accessibility access when prompted (enables auto-paste). Without it, vClips
-   falls back to copy-only — selected items go to the clipboard for manual ⌘V.
+1. Grant Accessibility access when prompted, or via **System Settings → Privacy &
+   Security → Accessibility** — enable **/Applications/vClips.app**. (Remove any
+   stale vClips entries first.) Without it, vClips falls back to copy-only —
+   selected items go to the clipboard for manual ⌘V.
 
 ## Usage
 - **⌘⇧V** — open the history popup (near the mouse)

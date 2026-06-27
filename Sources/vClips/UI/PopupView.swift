@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct PopupView: View {
     @ObservedObject var model: PopupViewModel
@@ -41,6 +42,12 @@ struct PopupView: View {
         }
         .frame(width: 380, height: 420)
         .onAppear { searchFocused = true }
+        // On the first popup after launch the panel becomes key asynchronously
+        // (the accessory app activates ~100ms later), so the onAppear focus is
+        // lost. Re-assert focus the moment the window actually becomes key.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            searchFocused = true
+        }
         .onKeyPress(.downArrow) { model.moveSelection(1); return .handled }
         .onKeyPress(.upArrow) { model.moveSelection(-1); return .handled }
         .onKeyPress(.return) { model.chooseSelected(); return .handled }

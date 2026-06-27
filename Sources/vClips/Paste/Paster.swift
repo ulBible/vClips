@@ -19,8 +19,10 @@ final class Paster {
         guard AccessibilityPermission.isTrusted else {
             return // copy-only fallback; user pastes manually with ⌘V
         }
+        // Wait for the popup to close and focus to return to the previous app
+        // before synthesizing ⌘V, so the keystroke lands in that app.
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(50))
+            try? await Task.sleep(for: .milliseconds(120))
             self.synthesizeCommandV()
         }
     }

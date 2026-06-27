@@ -1,10 +1,20 @@
 import AppKit
 import SwiftUI
 
+/// NSPanel that is allowed to become the key window even though the app is a
+/// background (LSUIElement) accessory. Without this, keyboard input never
+/// reaches the popup.
+private final class KeyablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+}
+
 @MainActor
 final class PopupController {
     private var panel: NSPanel?
     private let makeRootView: () -> AnyView
+    /// The app that was frontmost when the popup opened, restored on close so
+    /// keyboard focus (and the auto-paste target) returns to where it was.
+    private var previousApp: NSRunningApplication?
 
     init(rootView: @escaping () -> AnyView) {
         self.makeRootView = rootView
@@ -17,16 +27,24 @@ final class PopupController {
     func show() {
         let panel = self.panel ?? makePanel()
         self.panel = panel
+        previousApp = NSWorkspace.shared.frontmostApplication
         positionAtMouse(panel)
+        // An accessory app must be activated for its window to become key, or
+        // the first popup after launch receives no keyboard input at all.
+        NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
     }
 
     func hide() {
         panel?.orderOut(nil)
+        // Return focus to the app the user was in, so a manual or synthesized
+        // ⌘V lands there rather than in vClips.
+        previousApp?.activate()
+        previousApp = nil
     }
 
     private func makePanel() -> NSPanel {
-        let panel = NSPanel(
+        let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 420),
             styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
             backing: .buffered,

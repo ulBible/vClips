@@ -21,3 +21,10 @@ echo "==> Ad-hoc code signing"
 codesign --force --deep --sign - "${APP_BUNDLE}"
 
 echo "==> Done: ${APP_BUNDLE}"
+
+if [[ "${2:-}" == "install" ]]; then
+  echo "==> Installing to /Applications"
+  rm -rf "/Applications/${APP_NAME}.app"
+  cp -R "${APP_BUNDLE}" "/Applications/${APP_NAME}.app"
+  echo "==> Installed: /Applications/${APP_NAME}.app"
+fi

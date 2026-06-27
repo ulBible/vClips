@@ -15,8 +15,11 @@ struct vClipsApp: App {
 
     var body: some Scene {
         MenuBarExtra("vClips", systemImage: "doc.on.clipboard") {
-            Button("History (⌘⇧V)") {
+            Button("History") {
                 appDelegate.env.togglePopup()
+            }
+            SettingsLink {
+                Text("Settings…")
             }
             if !AccessibilityPermission.isTrusted {
                 Divider()
@@ -29,5 +32,9 @@ struct vClipsApp: App {
                 .keyboardShortcut("q")
         }
         .menuBarExtraStyle(.menu)
+
+        Settings {
+            SettingsView()
+        }
     }
 }

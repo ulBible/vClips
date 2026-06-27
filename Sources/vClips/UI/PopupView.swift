@@ -40,7 +40,7 @@ struct PopupView: View {
             }
         }
         .frame(width: 380, height: 420)
-        .onAppear { searchFocused = true; model.refresh() }
+        .onAppear { searchFocused = true }
         .onKeyPress(.downArrow) { model.moveSelection(1); return .handled }
         .onKeyPress(.upArrow) { model.moveSelection(-1); return .handled }
         .onKeyPress(.return) { model.chooseSelected(); return .handled }

@@ -25,7 +25,7 @@ final class HotkeyManager {
             GetEventParameter(event, EventParamName(kEventParamDirectObject),
                               EventParamType(typeEventHotKeyID), nil,
                               MemoryLayout<EventHotKeyID>.size, nil, &hkID)
-            if hkID.id == 1 {
+            if hkID.id == 1 && hkID.signature == manager.signature {
                 MainActor.assumeIsolated { manager.onTrigger() }
             }
             return noErr

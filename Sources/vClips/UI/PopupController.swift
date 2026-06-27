@@ -19,7 +19,6 @@ final class PopupController {
         self.panel = panel
         positionAtMouse(panel)
         panel.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: false)
     }
 
     func hide() {

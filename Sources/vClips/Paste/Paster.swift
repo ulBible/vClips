@@ -19,7 +19,10 @@ final class Paster {
         guard AccessibilityPermission.isTrusted else {
             return // copy-only fallback; user pastes manually with ⌘V
         }
-        synthesizeCommandV()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(50))
+            self.synthesizeCommandV()
+        }
     }
 
     private func synthesizeCommandV() {

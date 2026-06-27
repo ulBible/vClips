@@ -16,7 +16,7 @@ struct vClipsApp: App {
     var body: some Scene {
         MenuBarExtra("vClips", systemImage: "doc.on.clipboard") {
             Button("History (⌘⇧V)") {
-                // PopupController.toggle() wired in Task 4.
+                appDelegate.env.togglePopup()
             }
             Divider()
             Button("Quit vClips") { NSApplication.shared.terminate(nil) }

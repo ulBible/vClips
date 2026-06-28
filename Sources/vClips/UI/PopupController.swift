@@ -45,7 +45,7 @@ final class PopupController {
 
     private func makePanel() -> NSPanel {
         let panel = KeyablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 380, height: 420),
+            contentRect: NSRect(x: 0, y: 0, width: 380, height: 460),
             styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -56,7 +56,28 @@ final class PopupController {
         panel.level = .floating
         panel.hidesOnDeactivate = false
         panel.isMovableByWindowBackground = true
-        panel.contentView = NSHostingView(rootView: makeRootView())
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+
+        let effect = NSVisualEffectView()
+        effect.material = .hudWindow
+        effect.blendingMode = .behindWindow
+        effect.state = .active
+        effect.wantsLayer = true
+        effect.layer?.cornerRadius = 12
+        effect.layer?.masksToBounds = true
+
+        let host = NSHostingView(rootView: makeRootView())
+        host.translatesAutoresizingMaskIntoConstraints = false
+        effect.addSubview(host)
+        NSLayoutConstraint.activate([
+            host.leadingAnchor.constraint(equalTo: effect.leadingAnchor),
+            host.trailingAnchor.constraint(equalTo: effect.trailingAnchor),
+            host.topAnchor.constraint(equalTo: effect.topAnchor),
+            host.bottomAnchor.constraint(equalTo: effect.bottomAnchor),
+        ])
+
+        panel.contentView = effect
         return panel
     }
 

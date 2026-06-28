@@ -65,4 +65,43 @@ final class PopupViewModelTests: XCTestCase {
         vm.refresh()
         XCTAssertEqual(vm.results.first?.content, "x") // pinned to top
     }
+
+    func test_refresh_splitsFavoritesAndRecents() throws {
+        let store = try makeStore()
+        store.capture("plain")
+        store.capture("fav")
+        let fav = store.search("").first { $0.content == "fav" }!
+        store.togglePin(fav)
+        let vm = PopupViewModel(store: store, onChoose: { _ in })
+        vm.refresh()
+        XCTAssertEqual(vm.favorites.map(\.content), ["fav"])
+        XCTAssertEqual(vm.recents.map(\.content), ["plain"])
+        XCTAssertEqual(vm.results.map(\.content), ["fav", "plain"]) // favorites first
+    }
+
+    func test_refresh_whileSearching_isSingleListNoFavoritesSection() throws {
+        let store = try makeStore()
+        store.capture("apple")
+        store.capture("apricot")
+        let apple = store.search("").first { $0.content == "apple" }!
+        store.togglePin(apple)
+        let vm = PopupViewModel(store: store, onChoose: { _ in })
+        vm.query = "ap"
+        vm.refresh()
+        XCTAssertTrue(vm.favorites.isEmpty)
+        XCTAssertEqual(vm.recents.map(\.content), ["apple", "apricot"]) // pinned first
+        XCTAssertEqual(vm.results.count, 2)
+    }
+
+    func test_deleteSelected_removesItemAndClampsSelection() throws {
+        let store = try makeStore()
+        store.capture("one")
+        store.capture("two") // results: ["two","one"], selected 0
+        let vm = PopupViewModel(store: store, onChoose: { _ in })
+        vm.refresh()
+        vm.moveSelection(1) // select index 1 == "one"
+        vm.deleteSelected()
+        XCTAssertEqual(vm.results.map(\.content), ["two"])
+        XCTAssertEqual(vm.selectedIndex, 0) // clamped from 1 to last valid
+    }
 }

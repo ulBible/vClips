@@ -4,6 +4,11 @@ import SwiftUI
 final class PopupViewModel: ObservableObject {
     @Published var query: String = "" { didSet { refresh() } }
     @Published var selectedIndex: Int = 0
+    /// Pinned items, shown under the FAVORITES header (empty while searching).
+    @Published private(set) var favorites: [ClipItem] = []
+    /// Unpinned items (or, while searching, the full matching list, pinned first).
+    @Published private(set) var recents: [ClipItem] = []
+    /// Flat display order (favorites + recents); `selectedIndex` indexes this.
     @Published private(set) var results: [ClipItem] = []
 
     private let store: HistoryStore
@@ -15,7 +20,16 @@ final class PopupViewModel: ObservableObject {
     }
 
     func refresh() {
-        results = store.search(query)
+        let all = store.search(query)
+        if query.isEmpty {
+            favorites = all.filter { $0.isPinned }
+            recents = all.filter { !$0.isPinned }
+        } else {
+            // While searching, present a single list (already pinned-first sorted).
+            favorites = []
+            recents = all
+        }
+        results = favorites + recents
         clampSelection()
     }
 
@@ -32,6 +46,12 @@ final class PopupViewModel: ObservableObject {
     func togglePinSelected() {
         guard results.indices.contains(selectedIndex) else { return }
         store.togglePin(results[selectedIndex])
+        refresh()
+    }
+
+    func deleteSelected() {
+        guard results.indices.contains(selectedIndex) else { return }
+        store.delete(results[selectedIndex])
         refresh()
     }
 

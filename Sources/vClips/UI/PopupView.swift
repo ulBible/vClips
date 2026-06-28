@@ -22,6 +22,10 @@ struct PopupView: View {
         }
         .frame(width: 380)
         .frame(minHeight: 200, maxHeight: 460)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+        )
         .onAppear { searchFocused = true }
         // First popup after launch becomes key asynchronously; re-assert focus then.
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
@@ -77,7 +81,9 @@ struct PopupView: View {
                 .padding(.bottom, 8)
             }
             .onChange(of: model.selectedIndex) { _, new in
-                proxy.scrollTo(new, anchor: .center)
+                if model.results.indices.contains(new) {
+                    proxy.scrollTo(model.results[new].persistentModelID, anchor: .center)
+                }
             }
         }
     }
@@ -100,7 +106,6 @@ struct PopupView: View {
             onTogglePin: { model.selectedIndex = flatIndex; model.togglePinSelected() },
             onDelete: { model.selectedIndex = flatIndex; model.deleteSelected() }
         )
-        .id(flatIndex)
     }
 
     private var emptyState: some View {

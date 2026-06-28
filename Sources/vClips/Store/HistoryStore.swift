@@ -49,6 +49,11 @@ final class HistoryStore {
         save()
     }
 
+    func delete(_ item: ClipItem) {
+        context.delete(item)
+        save()
+    }
+
     private func firstItem(withContent content: String) -> ClipItem? {
         let all = (try? context.fetch(FetchDescriptor<ClipItem>())) ?? []
         return all.first { $0.content == content }

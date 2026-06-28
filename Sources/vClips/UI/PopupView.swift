@@ -147,14 +147,21 @@ private struct RowView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: ContentType.detect(item.content).symbolName)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .frame(width: 18)
-            Text(item.content.replacingOccurrences(of: "\n", with: " "))
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 4)
+            // Tap target for select/paste — kept separate from the action buttons
+            // so clicking ★/× doesn't also fire the row tap (which would paste & close).
+            HStack(spacing: 8) {
+                Image(systemName: ContentType.detect(item.content).symbolName)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
+                Text(item.content.replacingOccurrences(of: "\n", with: " "))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer(minLength: 4)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
+
             if isSelected || hovering {
                 Button(action: onTogglePin) {
                     Image(systemName: item.isPinned ? "star.fill" : "star")
@@ -178,8 +185,6 @@ private struct RowView: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(isSelected ? Color.accentColor.opacity(0.30) : Color.clear)
         )
-        .contentShape(Rectangle())
         .onHover { hovering = $0 }
-        .onTapGesture(perform: onTap)
     }
 }

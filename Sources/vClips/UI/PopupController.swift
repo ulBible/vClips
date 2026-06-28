@@ -44,14 +44,14 @@ final class PopupController {
     }
 
     private func makePanel() -> NSPanel {
+        // No .titled: KeyablePanel forces canBecomeKey, so we don't need a title
+        // bar — dropping it removes the empty strip above the search field.
         let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 460),
-            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
+            styleMask: [.nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
-        panel.titleVisibility = .hidden
-        panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
         panel.level = .floating
         panel.hidesOnDeactivate = false
@@ -69,6 +69,8 @@ final class PopupController {
 
         let host = NSHostingView(rootView: makeRootView())
         host.translatesAutoresizingMaskIntoConstraints = false
+        host.wantsLayer = true
+        host.layer?.backgroundColor = NSColor.clear.cgColor
         effect.addSubview(host)
         NSLayoutConstraint.activate([
             host.leadingAnchor.constraint(equalTo: effect.leadingAnchor),

@@ -93,6 +93,21 @@ final class PopupViewModelTests: XCTestCase {
         XCTAssertEqual(vm.results.count, 2)
     }
 
+    func test_reset_clearsQueryAndReturnsSelectionToTop() throws {
+        let store = try makeStore()
+        store.capture("a")
+        store.capture("b")
+        store.capture("c")
+        let vm = PopupViewModel(store: store, onChoose: { _ in })
+        vm.query = "a"
+        vm.moveSelection(0) // selection at 0 within filtered
+        vm.refresh()
+        vm.reset()
+        XCTAssertEqual(vm.query, "")
+        XCTAssertEqual(vm.selectedIndex, 0)
+        XCTAssertEqual(vm.results.count, 3) // full list restored
+    }
+
     func test_deleteSelected_removesItemAndClampsSelection() throws {
         let store = try makeStore()
         store.capture("one")

@@ -19,6 +19,13 @@ final class PopupViewModel: ObservableObject {
         self.onChoose = onChoose
     }
 
+    /// Called when the popup opens: clear the query and return selection to the top.
+    func reset() {
+        query = ""
+        selectedIndex = 0
+        refresh()
+    }
+
     func refresh() {
         let all = store.search(query)
         if query.isEmpty {

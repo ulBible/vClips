@@ -41,8 +41,7 @@ final class AppEnvironment: ObservableObject {
     }
 
     func togglePopup() {
-        viewModel.query = ""
-        viewModel.refresh()
+        viewModel.reset()
         popup.toggle()
     }
 

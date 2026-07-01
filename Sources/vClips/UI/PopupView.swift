@@ -53,6 +53,12 @@ struct PopupView: View {
                 .textFieldStyle(.plain)
                 .focused($searchFocused)
                 .onSubmit { model.chooseSelected() }
+            Button(action: onEscape) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Close (Esc)")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)

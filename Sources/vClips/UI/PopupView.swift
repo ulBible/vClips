@@ -318,6 +318,9 @@ private struct RowView: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(isSelected ? Color.accentColor : (hovering ? Color.primary.opacity(0.06) : Color.clear))
         )
+        // Transparent regions don't hit-test, so without an explicit shape
+        // the hover only triggers over the text/icons — not the whole row.
+        .contentShape(Rectangle())
         .onHover { hovering = $0 }
     }
 

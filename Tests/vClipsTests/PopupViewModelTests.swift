@@ -33,13 +33,13 @@ final class PopupViewModelTests: XCTestCase {
         store.capture("b")
         let vm = PopupViewModel(store: store, onChoose: { _ in })
         vm.refresh()
-        XCTAssertEqual(vm.selectedIndex, 0)
+        XCTAssertEqual(vm.selectedItem?.content, "b")
         vm.moveSelection(-1)
-        XCTAssertEqual(vm.selectedIndex, 0)   // clamped at top
+        XCTAssertEqual(vm.selectedItem?.content, "b")   // clamped at top
         vm.moveSelection(1)
-        XCTAssertEqual(vm.selectedIndex, 1)
+        XCTAssertEqual(vm.selectedItem?.content, "a")
         vm.moveSelection(1)
-        XCTAssertEqual(vm.selectedIndex, 1)   // clamped at bottom
+        XCTAssertEqual(vm.selectedItem?.content, "a")   // clamped at bottom
     }
 
     func test_chooseSelected_invokesCallbackWithSelectedItem() throws {
@@ -104,7 +104,7 @@ final class PopupViewModelTests: XCTestCase {
         vm.refresh()
         vm.reset()
         XCTAssertEqual(vm.query, "")
-        XCTAssertEqual(vm.selectedIndex, 0)
+        XCTAssertEqual(vm.selectedItem?.persistentModelID, vm.results.first?.persistentModelID)
         XCTAssertEqual(vm.results.count, 3) // full list restored
     }
 
@@ -117,6 +117,6 @@ final class PopupViewModelTests: XCTestCase {
         vm.moveSelection(1) // select index 1 == "one"
         vm.deleteSelected()
         XCTAssertEqual(vm.results.map(\.content), ["two"])
-        XCTAssertEqual(vm.selectedIndex, 0) // clamped from 1 to last valid
+        XCTAssertEqual(vm.selectedItem?.content, "two") // selection moves to the neighbor
     }
 }

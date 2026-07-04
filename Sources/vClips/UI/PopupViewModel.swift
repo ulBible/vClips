@@ -1,15 +1,24 @@
 import SwiftUI
+import SwiftData
 
 @MainActor
 final class PopupViewModel: ObservableObject {
     @Published var query: String = "" { didSet { refresh() } }
-    @Published var selectedIndex: Int = 0
+    /// Selection is tracked by item identity, not by list position, so
+    /// reordering (pin toggles, searches, captures) can never silently move
+    /// it onto a different item.
+    @Published private(set) var selectedID: PersistentIdentifier?
     /// Pinned items, shown under the FAVORITES header (empty while searching).
     @Published private(set) var favorites: [ClipItem] = []
     /// Unpinned items (or, while searching, the full matching list, pinned first).
     @Published private(set) var recents: [ClipItem] = []
-    /// Flat display order (favorites + recents); `selectedIndex` indexes this.
-    @Published private(set) var results: [ClipItem] = []
+
+    /// Flat display order (favorites + recents).
+    var results: [ClipItem] { favorites + recents }
+
+    var selectedItem: ClipItem? {
+        results.first { $0.persistentModelID == selectedID }
+    }
 
     private let store: HistoryStore
     private let onChoose: (ClipItem) -> Void
@@ -21,9 +30,8 @@ final class PopupViewModel: ObservableObject {
 
     /// Called when the popup opens: clear the query and return selection to the top.
     func reset() {
-        query = ""
-        selectedIndex = 0
-        refresh()
+        query = ""  // didSet runs refresh()
+        selectedID = results.first?.persistentModelID
     }
 
     func refresh() {
@@ -36,40 +44,59 @@ final class PopupViewModel: ObservableObject {
             favorites = []
             recents = all
         }
-        results = favorites + recents
-        clampSelection()
-    }
-
-    func moveSelection(_ delta: Int) {
-        selectedIndex += delta
-        clampSelection()
-    }
-
-    func chooseSelected() {
-        guard results.indices.contains(selectedIndex) else { return }
-        onChoose(results[selectedIndex])
-    }
-
-    func togglePinSelected() {
-        guard results.indices.contains(selectedIndex) else { return }
-        let item = results[selectedIndex]
-        store.togglePin(item)
-        refresh()
-        // Pinning moves the item between sections; keep the selection on it
-        // rather than on whatever row slid into the old index.
-        if let newIndex = results.firstIndex(where: { $0.persistentModelID == item.persistentModelID }) {
-            selectedIndex = newIndex
+        if selectedItem == nil {
+            selectedID = results.first?.persistentModelID
         }
     }
 
-    func deleteSelected() {
-        guard results.indices.contains(selectedIndex) else { return }
-        store.delete(results[selectedIndex])
-        refresh()
+    func isSelected(_ item: ClipItem) -> Bool {
+        item.persistentModelID == selectedID
     }
 
-    private func clampSelection() {
-        if results.isEmpty { selectedIndex = 0; return }
-        selectedIndex = min(max(selectedIndex, 0), results.count - 1)
+    func moveSelection(_ delta: Int) {
+        guard !results.isEmpty else { return }
+        let current = results.firstIndex { $0.persistentModelID == selectedID } ?? 0
+        let next = min(max(current + delta, 0), results.count - 1)
+        selectedID = results[next].persistentModelID
+    }
+
+    func choose(_ item: ClipItem) {
+        onChoose(item)
+    }
+
+    func togglePin(_ item: ClipItem) {
+        store.togglePin(item)
+        refresh()
+        // Pinning moves the item between sections; keep the selection on it.
+        selectedID = item.persistentModelID
+    }
+
+    func delete(_ item: ClipItem) {
+        let wasSelected = isSelected(item)
+        // Pick the neighbor to inherit the selection before the list changes.
+        let successorID: PersistentIdentifier? = {
+            guard let index = results.firstIndex(where: { $0.persistentModelID == item.persistentModelID }) else { return nil }
+            if index + 1 < results.count { return results[index + 1].persistentModelID }
+            if index > 0 { return results[index - 1].persistentModelID }
+            return nil
+        }()
+        store.delete(item)
+        refresh()
+        if wasSelected {
+            selectedID = successorID ?? results.first?.persistentModelID
+        }
+    }
+
+    // Keyboard variants operating on the current selection.
+    func chooseSelected() {
+        if let selectedItem { choose(selectedItem) }
+    }
+
+    func togglePinSelected() {
+        if let selectedItem { togglePin(selectedItem) }
+    }
+
+    func deleteSelected() {
+        if let selectedItem { delete(selectedItem) }
     }
 }

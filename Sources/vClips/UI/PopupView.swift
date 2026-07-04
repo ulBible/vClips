@@ -41,9 +41,11 @@ struct PopupView: View {
             guard press.modifiers.contains(.command) else { return .ignored }
             model.togglePinSelected(); return .handled
         }
-        // ⌘⌫ deletes the selected item. Bare ⌫ is left for editing the search field.
+        // ⌘⌫ deletes the selected item — but only while the search field is
+        // empty. With text present, ⌘⌫ must stay the standard "delete to
+        // beginning of line", or clearing a query silently destroys a clip.
         .onKeyPress(keys: [.delete]) { press in
-            guard press.modifiers.contains(.command) else { return .ignored }
+            guard press.modifiers.contains(.command), model.query.isEmpty else { return .ignored }
             model.deleteSelected(); return .handled
         }
     }
@@ -77,12 +79,12 @@ struct PopupView: View {
     /// in the LazyVStack (multiple highlight pills after repeated toggles).
     private enum ListEntry: Identifiable {
         case header(String, symbol: String)
-        case item(ClipItem, flatIndex: Int)
+        case item(ClipItem)
 
         var id: AnyHashable {
             switch self {
             case .header(let title, _): return "header-\(title)"
-            case .item(let item, _): return item.persistentModelID
+            case .item(let item): return item.persistentModelID
             }
         }
     }
@@ -91,20 +93,13 @@ struct PopupView: View {
         var entries: [ListEntry] = []
         if !model.favorites.isEmpty {
             entries.append(.header("FAVORITES", symbol: "star.fill"))
-            for (offset, item) in model.favorites.enumerated() {
-                entries.append(.item(item, flatIndex: offset))
-            }
+            entries.append(contentsOf: model.favorites.map(ListEntry.item))
         }
         if !model.recents.isEmpty {
-            if !model.favorites.isEmpty || model.query.isEmpty {
-                entries.append(.header(
-                    model.query.isEmpty ? "RECENT" : "RESULTS",
-                    symbol: model.query.isEmpty ? "clock" : "magnifyingglass"
-                ))
+            if model.query.isEmpty {
+                entries.append(.header("RECENT", symbol: "clock"))
             }
-            for (offset, item) in model.recents.enumerated() {
-                entries.append(.item(item, flatIndex: model.favorites.count + offset))
-            }
+            entries.append(contentsOf: model.recents.map(ListEntry.item))
         }
         return entries
     }
@@ -117,8 +112,8 @@ struct PopupView: View {
                         switch entry {
                         case .header(let title, let symbol):
                             sectionHeader(title, symbol: symbol)
-                        case .item(let item, let flatIndex):
-                            row(item, flatIndex: flatIndex)
+                        case .item(let item):
+                            row(item)
                         }
                     }
                 }
@@ -126,9 +121,9 @@ struct PopupView: View {
                 .padding(.bottom, 8)
             }
             .scrollIndicators(.hidden)
-            .onChange(of: model.selectedIndex) { _, new in
-                if model.results.indices.contains(new) {
-                    proxy.scrollTo(AnyHashable(model.results[new].persistentModelID), anchor: .center)
+            .onChange(of: model.selectedID) { _, new in
+                if let new {
+                    proxy.scrollTo(AnyHashable(new), anchor: .center)
                 }
             }
         }
@@ -147,13 +142,13 @@ struct PopupView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func row(_ item: ClipItem, flatIndex: Int) -> some View {
+    private func row(_ item: ClipItem) -> some View {
         RowView(
             item: item,
-            isSelected: flatIndex == model.selectedIndex,
-            onTap: { model.selectedIndex = flatIndex; model.chooseSelected() },
-            onTogglePin: { model.selectedIndex = flatIndex; model.togglePinSelected() },
-            onDelete: { model.selectedIndex = flatIndex; model.deleteSelected() }
+            isSelected: model.isSelected(item),
+            onTap: { model.choose(item) },
+            onTogglePin: { model.togglePin(item) },
+            onDelete: { model.delete(item) }
         )
     }
 
@@ -180,8 +175,7 @@ struct PopupView: View {
     /// always-present slot — appearing only for long items made the list
     /// area grow and shrink while moving the selection, which was jarring.
     private var previewText: String? {
-        guard model.results.indices.contains(model.selectedIndex) else { return nil }
-        return model.results[model.selectedIndex].content
+        model.selectedItem?.content
     }
 
     private func previewPane(_ text: String) -> some View {

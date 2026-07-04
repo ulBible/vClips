@@ -28,7 +28,7 @@ final class SingleFavoriteRepro: XCTestCase {
         vm.refresh()
         vm.deleteSelected()
         XCTAssertEqual(vm.results.count, 0)
-        XCTAssertEqual(vm.selectedIndex, 0)
+        XCTAssertNil(vm.selectedItem)
     }
 
     func test_unpin_onlyFavorite_withRecents() throws {
@@ -66,9 +66,9 @@ final class SelectionFollowsPinToggle: XCTestCase {
         vm.refresh()
         vm.moveSelection(2)      // select "a"
         vm.togglePinSelected()   // "a" jumps to the FAVORITES section (index 0)
-        XCTAssertEqual(vm.results[vm.selectedIndex].content, "a")
-        XCTAssertEqual(vm.selectedIndex, 0)
+        XCTAssertEqual(vm.selectedItem?.content, "a")
+        XCTAssertEqual(vm.results.first?.content, "a")
         vm.togglePinSelected()   // unpin: "a" returns to the recents order
-        XCTAssertEqual(vm.results[vm.selectedIndex].content, "a")
+        XCTAssertEqual(vm.selectedItem?.content, "a")
     }
 }

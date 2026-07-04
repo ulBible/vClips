@@ -27,8 +27,15 @@ final class ContentTypeTests: XCTestCase {
 
     func test_symbolNames() {
         XCTAssertEqual(ContentType.url.symbolName, "link")
-        XCTAssertEqual(ContentType.email.symbolName, "envelope")
-        XCTAssertEqual(ContentType.filePath.symbolName, "doc")
-        XCTAssertEqual(ContentType.text.symbolName, "doc.on.clipboard")
+        XCTAssertEqual(ContentType.email.symbolName, "envelope.fill")
+        XCTAssertEqual(ContentType.filePath.symbolName, "folder.fill")
+        XCTAssertEqual(ContentType.text.symbolName, "text.alignleft")
+    }
+
+    func test_labels() {
+        XCTAssertEqual(ContentType.url.label, "Link")
+        XCTAssertEqual(ContentType.email.label, "Email")
+        XCTAssertEqual(ContentType.filePath.label, "File")
+        XCTAssertEqual(ContentType.text.label, "Text")
     }
 }

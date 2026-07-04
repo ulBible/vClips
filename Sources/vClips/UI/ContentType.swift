@@ -18,9 +18,19 @@ enum ContentType {
     var symbolName: String {
         switch self {
         case .url: return "link"
-        case .email: return "envelope"
-        case .filePath: return "doc"
-        case .text: return "doc.on.clipboard"
+        case .email: return "envelope.fill"
+        case .filePath: return "folder.fill"
+        case .text: return "text.alignleft"
+        }
+    }
+
+    /// Short human-readable name shown in the row's metadata line.
+    var label: String {
+        switch self {
+        case .url: return "Link"
+        case .email: return "Email"
+        case .filePath: return "File"
+        case .text: return "Text"
         }
     }
 

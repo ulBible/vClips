@@ -32,7 +32,13 @@ final class PopupController {
         // An accessory app must be activated for its window to become key, or
         // the first popup after launch receives no keyboard input at all.
         NSApp.activate(ignoringOtherApps: true)
+        panel.alphaValue = 0
         panel.makeKeyAndOrderFront(nil)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.14
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().alphaValue = 1
+        }
     }
 
     func hide() {
@@ -47,7 +53,7 @@ final class PopupController {
         // No .titled: KeyablePanel forces canBecomeKey, so we don't need a title
         // bar — dropping it removes the empty strip above the search field.
         let panel = KeyablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 380, height: 460),
+            contentRect: NSRect(x: 0, y: 0, width: 420, height: 480),
             styleMask: [.nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -59,12 +65,14 @@ final class PopupController {
         panel.isOpaque = false
         panel.backgroundColor = .clear
 
+        // .popover adapts to light/dark appearance, unlike the always-dark
+        // .hudWindow, so the popup matches the system look in both modes.
         let effect = NSVisualEffectView()
-        effect.material = .hudWindow
+        effect.material = .popover
         effect.blendingMode = .behindWindow
         effect.state = .active
         effect.wantsLayer = true
-        effect.layer?.cornerRadius = 12
+        effect.layer?.cornerRadius = 14
         effect.layer?.masksToBounds = true
 
         let host = NSHostingView(rootView: makeRootView())

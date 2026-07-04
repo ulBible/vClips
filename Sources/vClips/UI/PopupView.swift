@@ -44,14 +44,14 @@ struct PopupView: View {
         .onKeyPress(.escape) { onEscape(); return .handled }
         .onKeyPress(keys: ["f"]) { press in
             guard press.modifiers.contains(.command) else { return .ignored }
-            model.togglePinSelected(); return .handled
+            animateListChange { model.togglePinSelected() }; return .handled
         }
         // ⌘⌫ deletes the selected item — but only while the search field is
         // empty. With text present, ⌘⌫ must stay the standard "delete to
         // beginning of line", or clearing a query silently destroys a clip.
         .onKeyPress(keys: [.delete]) { press in
             guard press.modifiers.contains(.command), model.query.isEmpty else { return .ignored }
-            model.deleteSelected(); return .handled
+            animateListChange { model.deleteSelected() }; return .handled
         }
     }
 
@@ -152,9 +152,17 @@ struct PopupView: View {
             item: item,
             isSelected: model.isSelected(item),
             onTap: { model.choose(item) },
-            onTogglePin: { model.togglePin(item) },
-            onDelete: { model.delete(item) }
+            onTogglePin: { animateListChange { model.togglePin(item) } },
+            onDelete: { animateListChange { model.delete(item) } }
         )
+    }
+
+    /// Pin toggles and deletes animate so the affected row visibly slides to
+    /// its new place (or fades out) instead of teleporting. Search filtering
+    /// deliberately stays instant — animating rows on every keystroke reads
+    /// as lag, not feedback.
+    private func animateListChange(_ change: () -> Void) {
+        withAnimation(.snappy(duration: 0.25)) { change() }
     }
 
     private var emptyState: some View {

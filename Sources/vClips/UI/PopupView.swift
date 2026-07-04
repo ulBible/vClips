@@ -176,11 +176,12 @@ struct PopupView: View {
         .frame(maxWidth: .infinity, minHeight: 140)
     }
 
+    /// The full content of the selected item. The preview pane is a fixed,
+    /// always-present slot — appearing only for long items made the list
+    /// area grow and shrink while moving the selection, which was jarring.
     private var previewText: String? {
         guard model.results.indices.contains(model.selectedIndex) else { return nil }
-        let content = model.results[model.selectedIndex].content
-        let isLong = content.count > 60 || content.contains("\n")
-        return isLong ? content : nil
+        return model.results[model.selectedIndex].content
     }
 
     private func previewPane(_ text: String) -> some View {
@@ -199,7 +200,7 @@ struct PopupView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(8)
             }
-            .frame(maxHeight: 76)
+            .frame(height: 76)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.primary.opacity(0.05))

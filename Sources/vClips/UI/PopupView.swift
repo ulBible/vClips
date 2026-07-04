@@ -70,25 +70,55 @@ struct PopupView: View {
         .padding(.vertical, 12)
     }
 
+    /// One flat entry list (headers + rows) rendered by a single ForEach.
+    /// A pin toggle then reorders rows *within* one container instead of
+    /// moving them between two ForEach containers — a cross-container move
+    /// with the same identity left stale "selected" row renderings behind
+    /// in the LazyVStack (multiple highlight pills after repeated toggles).
+    private enum ListEntry: Identifiable {
+        case header(String, symbol: String)
+        case item(ClipItem, flatIndex: Int)
+
+        var id: AnyHashable {
+            switch self {
+            case .header(let title, _): return "header-\(title)"
+            case .item(let item, _): return item.persistentModelID
+            }
+        }
+    }
+
+    private var listEntries: [ListEntry] {
+        var entries: [ListEntry] = []
+        if !model.favorites.isEmpty {
+            entries.append(.header("FAVORITES", symbol: "star.fill"))
+            for (offset, item) in model.favorites.enumerated() {
+                entries.append(.item(item, flatIndex: offset))
+            }
+        }
+        if !model.recents.isEmpty {
+            if !model.favorites.isEmpty || model.query.isEmpty {
+                entries.append(.header(
+                    model.query.isEmpty ? "RECENT" : "RESULTS",
+                    symbol: model.query.isEmpty ? "clock" : "magnifyingglass"
+                ))
+            }
+            for (offset, item) in model.recents.enumerated() {
+                entries.append(.item(item, flatIndex: model.favorites.count + offset))
+            }
+        }
+        return entries
+    }
+
     private var listBody: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    if !model.favorites.isEmpty {
-                        sectionHeader("FAVORITES", symbol: "star.fill")
-                        ForEach(Array(model.favorites.enumerated()), id: \.element.persistentModelID) { offset, item in
-                            row(item, flatIndex: offset)
-                        }
-                    }
-                    if !model.recents.isEmpty {
-                        if !model.favorites.isEmpty || model.query.isEmpty {
-                            sectionHeader(
-                                model.query.isEmpty ? "RECENT" : "RESULTS",
-                                symbol: model.query.isEmpty ? "clock" : "magnifyingglass"
-                            )
-                        }
-                        ForEach(Array(model.recents.enumerated()), id: \.element.persistentModelID) { offset, item in
-                            row(item, flatIndex: model.favorites.count + offset)
+                    ForEach(listEntries) { entry in
+                        switch entry {
+                        case .header(let title, let symbol):
+                            sectionHeader(title, symbol: symbol)
+                        case .item(let item, let flatIndex):
+                            row(item, flatIndex: flatIndex)
                         }
                     }
                 }
@@ -98,7 +128,7 @@ struct PopupView: View {
             .scrollIndicators(.hidden)
             .onChange(of: model.selectedIndex) { _, new in
                 if model.results.indices.contains(new) {
-                    proxy.scrollTo(model.results[new].persistentModelID, anchor: .center)
+                    proxy.scrollTo(AnyHashable(model.results[new].persistentModelID), anchor: .center)
                 }
             }
         }

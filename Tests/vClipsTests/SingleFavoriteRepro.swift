@@ -54,3 +54,21 @@ final class SingleFavoriteRepro: XCTestCase {
         XCTAssertEqual(vm.results.map(\.content), ["recent1"])
     }
 }
+
+@MainActor
+final class SelectionFollowsPinToggle: XCTestCase {
+    func test_togglePin_keepsSelectionOnToggledItem() throws {
+        let store = try HistoryStore(container: ModelContainerFactory.inMemory())
+        store.capture("a")
+        store.capture("b")
+        store.capture("c") // results: [c, b, a]
+        let vm = PopupViewModel(store: store, onChoose: { _ in })
+        vm.refresh()
+        vm.moveSelection(2)      // select "a"
+        vm.togglePinSelected()   // "a" jumps to the FAVORITES section (index 0)
+        XCTAssertEqual(vm.results[vm.selectedIndex].content, "a")
+        XCTAssertEqual(vm.selectedIndex, 0)
+        vm.togglePinSelected()   // unpin: "a" returns to the recents order
+        XCTAssertEqual(vm.results[vm.selectedIndex].content, "a")
+    }
+}

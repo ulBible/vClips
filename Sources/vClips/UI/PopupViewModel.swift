@@ -52,8 +52,14 @@ final class PopupViewModel: ObservableObject {
 
     func togglePinSelected() {
         guard results.indices.contains(selectedIndex) else { return }
-        store.togglePin(results[selectedIndex])
+        let item = results[selectedIndex]
+        store.togglePin(item)
         refresh()
+        // Pinning moves the item between sections; keep the selection on it
+        // rather than on whatever row slid into the old index.
+        if let newIndex = results.firstIndex(where: { $0.persistentModelID == item.persistentModelID }) {
+            selectedIndex = newIndex
+        }
     }
 
     func deleteSelected() {

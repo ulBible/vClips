@@ -42,16 +42,19 @@ struct PopupView: View {
         .onKeyPress(.upArrow) { model.moveSelection(-1); return .handled }
         .onKeyPress(.return) { model.chooseSelected(); return .handled }
         .onKeyPress(.escape) { onEscape(); return .handled }
-        .onKeyPress(keys: ["f"]) { press in
-            guard press.modifiers.contains(.command) else { return .ignored }
-            animateListChange { model.togglePinSelected() }; return .handled
-        }
-        // ⌘⌫ deletes the selected item — but only while the search field is
-        // empty. With text present, ⌘⌫ must stay the standard "delete to
-        // beginning of line", or clearing a query silently destroys a clip.
-        .onKeyPress(keys: [.delete]) { press in
-            guard press.modifiers.contains(.command), model.query.isEmpty else { return .ignored }
-            animateListChange { model.deleteSelected() }; return .handled
+        .background {
+            // ⌘-modified keys never reach onKeyPress — AppKit routes them
+            // through the key-equivalent chain before keyDown — so the pin
+            // and delete shortcuts are hidden buttons with real keyboard
+            // shortcuts instead.
+            // ⌘⌫ is NOT here: keyboardShortcut(.delete) never matches the
+            // hardware delete key, so PopupController handles it with an
+            // NSEvent monitor instead.
+            Button("") { animateListChange { model.togglePinSelected() } }
+                .keyboardShortcut("f", modifiers: .command)
+            .opacity(0)
+            .frame(width: 0, height: 0)
+            .accessibilityHidden(true)
         }
     }
 

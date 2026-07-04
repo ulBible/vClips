@@ -12,14 +12,32 @@ private final class KeyablePanel: NSPanel {
 final class PopupController {
     private var panel: NSPanel?
     private var hostView: NSHostingView<AnyView>?
+    private var keyMonitor: Any?
     private let makeRootView: () -> AnyView
+    /// Handles ⌘⌫ while the popup is key. Returns true when it consumed the
+    /// event (SwiftUI's keyboardShortcut(.delete) never matches the hardware
+    /// delete key, so this goes through an AppKit event monitor).
+    var onCommandDelete: (() -> Bool)?
     /// The app that was frontmost when the popup opened, restored on close so
     /// keyboard focus (and the auto-paste target) returns to where it was.
     private var previousApp: NSRunningApplication?
 
     init(rootView: @escaping () -> AnyView) {
         self.makeRootView = rootView
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self,
+                  self.panel?.isKeyWindow == true,
+                  event.keyCode == 51,  // delete (⌫)
+                  event.modifierFlags.contains(.command),
+                  self.onCommandDelete?() == true
+            else { return event }
+            return nil
+        }
     }
+
+    // No deinit/removeMonitor: the controller lives for the app's lifetime
+    // (owned by AppEnvironment), and a nonisolated deinit cannot touch the
+    // MainActor-bound monitor under strict concurrency anyway.
 
     func toggle() {
         if panel?.isVisible == true { hide() } else { show() }

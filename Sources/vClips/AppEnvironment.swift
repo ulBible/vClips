@@ -32,6 +32,13 @@ final class AppEnvironment: ObservableObject {
                 onContentChange: { self.popup.resizeToFit() }
             ))
         })
+        // Only while the query is empty: with text present, ⌘⌫ must stay the
+        // search field's "delete to beginning of line".
+        self.popup.onCommandDelete = { [weak self] in
+            guard let self, self.viewModel.query.isEmpty else { return false }
+            withAnimation(.snappy(duration: 0.25)) { self.viewModel.deleteSelected() }
+            return true
+        }
     }
 
     func start() {

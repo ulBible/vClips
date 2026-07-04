@@ -57,18 +57,28 @@ final class SingleFavoriteRepro: XCTestCase {
 
 @MainActor
 final class SelectionFollowsPinToggle: XCTestCase {
-    func test_togglePin_keepsSelectionOnToggledItem() throws {
+    func test_togglePin_keepsSelectionAtListPosition() throws {
         let store = try HistoryStore(container: ModelContainerFactory.inMemory())
         store.capture("a")
         store.capture("b")
         store.capture("c") // results: [c, b, a]
         let vm = PopupViewModel(store: store, onChoose: { _ in })
         vm.refresh()
-        vm.moveSelection(2)      // select "a"
-        vm.togglePinSelected()   // "a" jumps to the FAVORITES section (index 0)
+        vm.moveSelection(1)      // select "b" (middle)
+        vm.togglePinSelected()   // "b" jumps to the PINNED section (index 0)
+        XCTAssertEqual(vm.results.first?.content, "b")
+        // Selection stays at the vacated slot, now occupied by "a".
         XCTAssertEqual(vm.selectedItem?.content, "a")
-        XCTAssertEqual(vm.results.first?.content, "a")
-        vm.togglePinSelected()   // unpin: "a" returns to the recents order
-        XCTAssertEqual(vm.selectedItem?.content, "a")
+    }
+
+    func test_togglePin_unselectedItem_leavesSelectionAlone() throws {
+        let store = try HistoryStore(container: ModelContainerFactory.inMemory())
+        store.capture("a")
+        store.capture("b") // results: [b, a], selected "b"
+        let vm = PopupViewModel(store: store, onChoose: { _ in })
+        vm.refresh()
+        let a = vm.results.last!
+        vm.togglePin(a)          // mouse click on the unselected row
+        XCTAssertEqual(vm.selectedItem?.content, "b")
     }
 }

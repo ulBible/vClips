@@ -72,26 +72,36 @@ final class PopupViewModel: ObservableObject {
     }
 
     func togglePin(_ item: ClipItem) {
+        // Pinning moves the item to another section. Keep the selection (and
+        // the user's keyboard flow) at the current list position — the
+        // neighbor slides into the vacated slot — instead of following the
+        // item across the list. Same rule as delete.
+        let wasSelected = isSelected(item)
+        let successorID = neighborID(of: item)
         store.togglePin(item)
         refresh()
-        // Pinning moves the item between sections; keep the selection on it.
-        selectedID = item.persistentModelID
+        if wasSelected {
+            selectedID = successorID ?? item.persistentModelID
+        }
     }
 
     func delete(_ item: ClipItem) {
         let wasSelected = isSelected(item)
-        // Pick the neighbor to inherit the selection before the list changes.
-        let successorID: PersistentIdentifier? = {
-            guard let index = results.firstIndex(where: { $0.persistentModelID == item.persistentModelID }) else { return nil }
-            if index + 1 < results.count { return results[index + 1].persistentModelID }
-            if index > 0 { return results[index - 1].persistentModelID }
-            return nil
-        }()
+        let successorID = neighborID(of: item)
         store.delete(item)
         refresh()
         if wasSelected {
             selectedID = successorID ?? results.first?.persistentModelID
         }
+    }
+
+    /// The item that visually inherits `item`'s slot when it leaves: the next
+    /// row, or the previous one at the end of the list.
+    private func neighborID(of item: ClipItem) -> PersistentIdentifier? {
+        guard let index = results.firstIndex(where: { $0.persistentModelID == item.persistentModelID }) else { return nil }
+        if index + 1 < results.count { return results[index + 1].persistentModelID }
+        if index > 0 { return results[index - 1].persistentModelID }
+        return nil
     }
 
     // Keyboard variants operating on the current selection.

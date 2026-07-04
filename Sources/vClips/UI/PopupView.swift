@@ -255,6 +255,8 @@ private struct RowView: View {
     let onDelete: () -> Void
     @State private var hovering = false
 
+    private var showsActions: Bool { isSelected || hovering }
+
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let f = RelativeDateTimeFormatter()
         f.unitsStyle = .abbreviated
@@ -285,23 +287,26 @@ private struct RowView: View {
             .contentShape(Rectangle())
             .onTapGesture(perform: onTap)
 
-            if isSelected || hovering {
-                Button(action: onTogglePin) {
-                    Image(systemName: item.isPinned ? "star.fill" : "star")
-                        .foregroundStyle(item.isPinned ? Color.yellow : (isSelected ? Color.white.opacity(0.8) : Color.secondary))
-                }
-                .buttonStyle(.plain)
-                .help(item.isPinned ? "Unfavorite (⌘F)" : "Favorite (⌘F)")
-
-                Button(action: onDelete) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(isSelected ? Color.white.opacity(0.8) : Color.secondary)
-                }
-                .buttonStyle(.plain)
-                .help("Delete (⌘⌫)")
-            } else if item.isPinned {
-                Image(systemName: "star.fill").font(.caption).foregroundStyle(.yellow)
+            // The action slots stay in the layout permanently (hidden via
+            // opacity) so the row never reflows when they appear — buttons
+            // shifting under the cursor caused misclicks.
+            Button(action: onTogglePin) {
+                Image(systemName: item.isPinned ? "star.fill" : "star")
+                    .foregroundStyle(item.isPinned ? Color.yellow : (isSelected ? Color.white.opacity(0.8) : Color.secondary))
             }
+            .buttonStyle(.plain)
+            .opacity(showsActions || item.isPinned ? 1 : 0)
+            .allowsHitTesting(showsActions)
+            .help(item.isPinned ? "Unfavorite (⌘F)" : "Favorite (⌘F)")
+
+            Button(action: onDelete) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(isSelected ? Color.white.opacity(0.8) : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .opacity(showsActions ? 1 : 0)
+            .allowsHitTesting(showsActions)
+            .help("Delete (⌘⌫)")
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)

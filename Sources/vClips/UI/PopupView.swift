@@ -296,7 +296,11 @@ private struct RowView: View {
             }
             .buttonStyle(.plain)
             .opacity(showsActions || item.isPinned ? 1 : 0)
-            .allowsHitTesting(showsActions)
+            // Clickable whenever visible. Hover alone is not enough: when a
+            // row slides under a stationary cursor (e.g. after unpinning the
+            // favorite above it), macOS sends no mouseEntered, so a visible
+            // star would silently swallow clicks.
+            .allowsHitTesting(showsActions || item.isPinned)
             .help(item.isPinned ? "Unfavorite (⌘F)" : "Favorite (⌘F)")
 
             Button(action: onDelete) {

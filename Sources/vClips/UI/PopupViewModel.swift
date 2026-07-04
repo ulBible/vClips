@@ -8,7 +8,12 @@ final class PopupViewModel: ObservableObject {
     /// reordering (pin toggles, searches, captures) can never silently move
     /// it onto a different item.
     @Published private(set) var selectedID: PersistentIdentifier?
-    /// Pinned items, shown under the FAVORITES header (empty while searching).
+    /// The row the view should scroll to. Only keyboard navigation and popup
+    /// reset set this — pin/unpin/delete deliberately leave the viewport
+    /// alone so bulk actions at the end of a long list don't yank the scroll
+    /// position back to the top after every click.
+    @Published private(set) var scrollTarget: PersistentIdentifier?
+    /// Pinned items, shown under the PINNED header (empty while searching).
     @Published private(set) var favorites: [ClipItem] = []
     /// Unpinned items (or, while searching, the full matching list, pinned first).
     @Published private(set) var recents: [ClipItem] = []
@@ -32,6 +37,7 @@ final class PopupViewModel: ObservableObject {
     func reset() {
         query = ""  // didSet runs refresh()
         selectedID = results.first?.persistentModelID
+        scrollTarget = selectedID
     }
 
     func refresh() {
@@ -58,6 +64,7 @@ final class PopupViewModel: ObservableObject {
         let current = results.firstIndex { $0.persistentModelID == selectedID } ?? 0
         let next = min(max(current + delta, 0), results.count - 1)
         selectedID = results[next].persistentModelID
+        scrollTarget = selectedID
     }
 
     func choose(_ item: ClipItem) {

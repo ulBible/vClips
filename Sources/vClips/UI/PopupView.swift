@@ -97,7 +97,7 @@ struct PopupView: View {
     private var listEntries: [ListEntry] {
         var entries: [ListEntry] = []
         if !model.favorites.isEmpty {
-            entries.append(.header("FAVORITES", symbol: "star.fill"))
+            entries.append(.header("PINNED", symbol: "pin.fill"))
             entries.append(contentsOf: model.favorites.map(ListEntry.item))
         }
         if !model.recents.isEmpty {
@@ -126,7 +126,7 @@ struct PopupView: View {
                 .padding(.bottom, 8)
             }
             .scrollIndicators(.hidden)
-            .onChange(of: model.selectedID) { _, new in
+            .onChange(of: model.scrollTarget) { _, new in
                 if let new {
                     proxy.scrollTo(AnyHashable(new), anchor: .center)
                 }
@@ -324,7 +324,7 @@ private struct RowView: View {
             // opacity) so the row never reflows when they appear — buttons
             // shifting under the cursor caused misclicks.
             Button(action: onTogglePin) {
-                Image(systemName: item.isPinned ? "star.fill" : "star")
+                Image(systemName: item.isPinned ? "pin.fill" : "pin")
                     .foregroundStyle(item.isPinned ? Color.yellow : (isSelected ? Self.selectionText.opacity(0.8) : Color.secondary))
                     // Explicit hit box: the bare glyph (~15pt) left dead zones
                     // around the visible icon, so edge clicks did nothing.
@@ -338,7 +338,7 @@ private struct RowView: View {
             // favorite above it), macOS sends no mouseEntered, so a visible
             // star would silently swallow clicks.
             .allowsHitTesting(showsActions || item.isPinned)
-            .help(item.isPinned ? "Unfavorite (⌘F)" : "Favorite (⌘F)")
+            .help(item.isPinned ? "Unpin (⌘F)" : "Pin (⌘F)")
 
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")

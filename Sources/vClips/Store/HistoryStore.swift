@@ -26,17 +26,17 @@ final class HistoryStore {
     }
 
     func search(_ query: String) -> [ClipItem] {
-        let items = (try? context.fetch(FetchDescriptor<ClipItem>())) ?? []
-        let filtered: [ClipItem]
-        if query.isEmpty {
-            filtered = items
-        } else {
-            filtered = items.filter { $0.content.localizedCaseInsensitiveContains(query) }
+        // Match and order in the store instead of fetching the whole table
+        // and filtering in memory on every keystroke.
+        var descriptor = FetchDescriptor<ClipItem>(
+            sortBy: [SortDescriptor(\.lastUsedAt, order: .reverse)]
+        )
+        if !query.isEmpty {
+            descriptor.predicate = #Predicate { $0.content.localizedStandardContains(query) }
         }
-        return filtered.sorted { lhs, rhs in
-            if lhs.isPinned != rhs.isPinned { return lhs.isPinned && !rhs.isPinned }
-            return lhs.lastUsedAt > rhs.lastUsedAt
-        }
+        let items = (try? context.fetch(descriptor)) ?? []
+        // Pinned first, preserving recency order within each group.
+        return items.filter(\.isPinned) + items.filter { !$0.isPinned }
     }
 
     func togglePin(_ item: ClipItem) {

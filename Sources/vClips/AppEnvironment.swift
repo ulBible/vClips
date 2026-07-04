@@ -26,7 +26,11 @@ final class AppEnvironment: ObservableObject {
         })
         self.popup = PopupController(rootView: { [weak self] in
             guard let self else { return AnyView(EmptyView()) }
-            return AnyView(PopupView(model: self.viewModel, onEscape: { self.popup.hide() }))
+            return AnyView(PopupView(
+                model: self.viewModel,
+                onEscape: { self.popup.hide() },
+                onContentChange: { self.popup.resizeToFit() }
+            ))
         })
     }
 

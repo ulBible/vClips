@@ -25,6 +25,17 @@ final class ContentTypeTests: XCTestCase {
         XCTAssertEqual(ContentType.detect("not@an@email"), .text)
     }
 
+    func test_atSignInURLsAndPathsIsNotEmail() {
+        XCTAssertEqual(ContentType.detect("https://user@example.com/page"), .url)
+        XCTAssertEqual(ContentType.detect("/Users/a@b.com/notes.txt"), .filePath)
+        XCTAssertEqual(ContentType.detect("git@github.com:org/repo.git"), .text)
+    }
+
+    func test_hugeClipIsTextWithoutFullScan() {
+        let huge = String(repeating: "a", count: 2_000_000) + "@example.com"
+        XCTAssertEqual(ContentType.detect(huge), .text)
+    }
+
     func test_symbolNames() {
         XCTAssertEqual(ContentType.url.symbolName, "link")
         XCTAssertEqual(ContentType.email.symbolName, "envelope.fill")

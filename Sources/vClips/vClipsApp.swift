@@ -56,16 +56,20 @@ private struct MenuContent: View {
     }
 
     /// Brings the Settings scene window to the front. `openSettings()` creates
-    /// the window asynchronously, so retry on the next run-loop turns until it
-    /// exists rather than looking exactly once.
-    private func raiseSettingsWindow(attemptsLeft: Int = 10) {
+    /// the window asynchronously, so poll briefly (up to ~1s) until it exists.
+    /// Matching falls back to the window title because the identifier is a
+    /// private SwiftUI detail that a macOS update may rename.
+    private func raiseSettingsWindow(attemptsLeft: Int = 20) {
         let settings = NSApp.windows.first {
             $0.identifier?.rawValue == "com_apple_SwiftUI_Settings_window"
+                || $0.title == "vClips Settings"
         }
         if let settings {
             settings.makeKeyAndOrderFront(nil)
         } else if attemptsLeft > 0 {
-            DispatchQueue.main.async { raiseSettingsWindow(attemptsLeft: attemptsLeft - 1) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                raiseSettingsWindow(attemptsLeft: attemptsLeft - 1)
+            }
         }
     }
 }

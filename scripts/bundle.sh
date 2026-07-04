@@ -36,6 +36,14 @@ if [[ -z "${SIGN_IDENTITY}" ]]; then
   fi
 fi
 
+# xcodebuild needs a full Xcode; with only Command Line Tools selected it
+# fails with a confusing error, so check up front with a pointer to the fix.
+if ! xcodebuild -version >/dev/null 2>&1; then
+  echo "error: xcodebuild requires full Xcode (active developer dir: $(xcode-select -p))." >&2
+  echo "Install Xcode, then: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer" >&2
+  exit 1
+fi
+
 echo "==> Building (${XCODE_CONFIG} via xcodebuild)"
 xcodebuild -quiet \
   -scheme "${APP_NAME}" \
@@ -54,10 +62,18 @@ cp "${BUILD_DIR}/${APP_NAME}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 cp "Resources/Info.plist" "${APP_BUNDLE}/Contents/Info.plist"
 
 # Package resource bundles, found via Bundle.main.resourceURL at runtime.
+copied_bundles=0
 for resource_bundle in "${BUILD_DIR}"/*.bundle; do
   [[ -e "${resource_bundle}" ]] || continue
   cp -R "${resource_bundle}" "${APP_BUNDLE}/Contents/Resources/"
+  copied_bundles=$((copied_bundles + 1))
 done
+# An app without its package resource bundles launches here (the dev .build
+# fallback exists) but fatal-errors on every other Mac — fail loudly instead.
+if [[ "${copied_bundles}" -eq 0 ]]; then
+  echo "error: no package resource bundles found in ${BUILD_DIR} — the derived-data layout may have changed." >&2
+  exit 1
+fi
 
 if [[ "${SIGN_IDENTITY}" == "-" ]]; then
   echo "==> Ad-hoc code signing (no stable identity found — Accessibility grant will reset each build)"

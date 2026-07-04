@@ -4,6 +4,9 @@ import AppKit
 struct PopupView: View {
     @ObservedObject var model: PopupViewModel
     let onEscape: () -> Void
+    /// Called when the amount of content changes so the panel can re-fit its
+    /// height to the SwiftUI ideal size.
+    let onContentChange: () -> Void
     @FocusState private var searchFocused: Bool
 
     var body: some View {
@@ -22,13 +25,15 @@ struct PopupView: View {
             Divider().opacity(0.4)
             footer
         }
-        .frame(width: 420)
-        .frame(minHeight: 220, maxHeight: 480)
+        .frame(width: PopupMetrics.width)
+        .frame(minHeight: PopupMetrics.minHeight, maxHeight: PopupMetrics.maxHeight)
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: PopupMetrics.cornerRadius)
                 .strokeBorder(Color.primary.opacity(0.10), lineWidth: 1)
         )
         .onAppear { searchFocused = true }
+        .onChange(of: model.results.count) { _, _ in onContentChange() }
+        .onChange(of: model.favorites.count) { _, _ in onContentChange() }
         // First popup after launch becomes key asynchronously; re-assert focus then.
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
             searchFocused = true
@@ -188,7 +193,9 @@ struct PopupView: View {
             .font(.caption2.weight(.semibold))
             .foregroundStyle(.tertiary)
             ScrollView {
-                Text(text)
+                // Cap what gets laid out — rendering a multi-MB clip into the
+                // 76pt pane stutters on every selection move.
+                Text(text.count > 2000 ? String(text.prefix(2000)) + "\u{2026}" : text)
                     .font(.system(size: 12))
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -248,9 +255,32 @@ private struct RowView: View {
     let onTap: () -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
+    /// Detected once per row value — the computed form re-ran the regex three
+    /// times (label, icon, tint) on every body evaluation.
+    private let contentType: ContentType
     @State private var hovering = false
 
+    init(
+        item: ClipItem,
+        isSelected: Bool,
+        onTap: @escaping () -> Void,
+        onTogglePin: @escaping () -> Void,
+        onDelete: @escaping () -> Void
+    ) {
+        self.item = item
+        self.isSelected = isSelected
+        self.onTap = onTap
+        self.onTogglePin = onTogglePin
+        self.onDelete = onDelete
+        self.contentType = ContentType.detect(item.content)
+    }
+
     private var showsActions: Bool { isSelected || hovering }
+
+    // System-paired selection colors stay legible for any accent (yellow,
+    // graphite, …) where hardcoded white-on-accent loses contrast.
+    private static let selectionBackground = Color(nsColor: .selectedContentBackgroundColor)
+    private static let selectionText = Color(nsColor: .alternateSelectedControlTextColor)
 
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let f = RelativeDateTimeFormatter()
@@ -259,8 +289,6 @@ private struct RowView: View {
         return f
     }()
 
-    private var contentType: ContentType { ContentType.detect(item.content) }
-
     var body: some View {
         HStack(spacing: 10) {
             // Tap target for select/paste — kept separate from the action buttons
@@ -268,14 +296,16 @@ private struct RowView: View {
             HStack(spacing: 10) {
                 iconChip
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(item.content.replacingOccurrences(of: "\n", with: " "))
+                    // lineLimit(1) shows ~60 chars; bounding the input avoids
+                    // copying multi-MB clips on every render.
+                    Text(String(item.content.prefix(200)).replacingOccurrences(of: "\n", with: " "))
                         .font(.system(size: 13))
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .foregroundStyle(isSelected ? .white : .primary)
+                        .foregroundStyle(isSelected ? Self.selectionText : Color.primary)
                     Text("\(contentType.label) · \(Self.relativeFormatter.localizedString(for: item.lastUsedAt, relativeTo: Date()))")
                         .font(.system(size: 10.5))
-                        .foregroundStyle(isSelected ? Color.white.opacity(0.7) : Color.secondary.opacity(0.8))
+                        .foregroundStyle(isSelected ? Self.selectionText.opacity(0.7) : Color.secondary.opacity(0.8))
                 }
                 Spacer(minLength: 4)
             }
@@ -287,7 +317,7 @@ private struct RowView: View {
             // shifting under the cursor caused misclicks.
             Button(action: onTogglePin) {
                 Image(systemName: item.isPinned ? "star.fill" : "star")
-                    .foregroundStyle(item.isPinned ? Color.yellow : (isSelected ? Color.white.opacity(0.8) : Color.secondary))
+                    .foregroundStyle(item.isPinned ? Color.yellow : (isSelected ? Self.selectionText.opacity(0.8) : Color.secondary))
             }
             .buttonStyle(.plain)
             .opacity(showsActions || item.isPinned ? 1 : 0)
@@ -300,7 +330,7 @@ private struct RowView: View {
 
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(isSelected ? Color.white.opacity(0.8) : Color.secondary)
+                    .foregroundStyle(isSelected ? Self.selectionText.opacity(0.8) : Color.secondary)
             }
             .buttonStyle(.plain)
             .opacity(showsActions ? 1 : 0)
@@ -311,7 +341,7 @@ private struct RowView: View {
         .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isSelected ? Color.accentColor : (hovering ? Color.primary.opacity(0.06) : Color.clear))
+                .fill(isSelected ? Self.selectionBackground : (hovering ? Color.primary.opacity(0.06) : Color.clear))
         )
         // Transparent regions don't hit-test, so without an explicit shape
         // the hover only triggers over the text/icons — not the whole row.
@@ -323,7 +353,7 @@ private struct RowView: View {
         RoundedRectangle(cornerRadius: 6)
             .fill(
                 LinearGradient(
-                    colors: [chipTint.opacity(0.85), chipTint],
+                    colors: [contentType.tint.opacity(0.85), contentType.tint],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -336,12 +366,4 @@ private struct RowView: View {
             )
     }
 
-    private var chipTint: Color {
-        switch contentType {
-        case .url: return .blue
-        case .email: return .green
-        case .filePath: return .orange
-        case .text: return Color(nsColor: .systemGray)
-        }
-    }
 }

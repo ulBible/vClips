@@ -11,6 +11,7 @@ private final class KeyablePanel: NSPanel {
 @MainActor
 final class PopupController {
     private var panel: NSPanel?
+    private var hostView: NSHostingView<AnyView>?
     private let makeRootView: () -> AnyView
     /// The app that was frontmost when the popup opened, restored on close so
     /// keyboard focus (and the auto-paste target) returns to where it was.
@@ -28,6 +29,7 @@ final class PopupController {
         let panel = self.panel ?? makePanel()
         self.panel = panel
         previousApp = NSWorkspace.shared.frontmostApplication
+        fitPanelToContent()
         positionAtMouse(panel)
         // An accessory app must be activated for its window to become key, or
         // the first popup after launch receives no keyboard input at all.
@@ -39,6 +41,9 @@ final class PopupController {
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             panel.animator().alphaValue = 1
         }
+        // SwiftUI may apply pending model updates a run-loop turn later than
+        // the fitting pass above; re-fit once they have landed.
+        DispatchQueue.main.async { [weak self] in self?.fitPanelToContent() }
     }
 
     func hide() {
@@ -49,11 +54,30 @@ final class PopupController {
         previousApp = nil
     }
 
+    /// Sizes the panel to the SwiftUI content's ideal height so a short
+    /// history doesn't sit in a mostly-blank full-height window. Safe to call
+    /// from SwiftUI updates: the frame change is deferred to the next
+    /// run-loop turn.
+    func resizeToFit() {
+        DispatchQueue.main.async { [weak self] in self?.fitPanelToContent() }
+    }
+
+    private func fitPanelToContent() {
+        guard let panel, let hostView else { return }
+        let ideal = hostView.fittingSize
+        let height = min(max(ideal.height, PopupMetrics.minHeight), PopupMetrics.maxHeight)
+        guard abs(panel.frame.height - height) > 0.5 else { return }
+        var frame = panel.frame
+        frame.origin.y += frame.height - height  // keep the top edge fixed
+        frame.size.height = height
+        panel.setFrame(frame, display: true, animate: panel.isVisible)
+    }
+
     private func makePanel() -> NSPanel {
         // No .titled: KeyablePanel forces canBecomeKey, so we don't need a title
         // bar — dropping it removes the empty strip above the search field.
         let panel = KeyablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 480),
+            contentRect: NSRect(x: 0, y: 0, width: PopupMetrics.width, height: PopupMetrics.maxHeight),
             styleMask: [.nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -72,7 +96,7 @@ final class PopupController {
         effect.blendingMode = .behindWindow
         effect.state = .active
         effect.wantsLayer = true
-        effect.layer?.cornerRadius = 14
+        effect.layer?.cornerRadius = PopupMetrics.cornerRadius
         effect.layer?.masksToBounds = true
 
         let host = NSHostingView(rootView: makeRootView())
@@ -88,6 +112,7 @@ final class PopupController {
         ])
 
         panel.contentView = effect
+        self.hostView = host
         return panel
     }
 

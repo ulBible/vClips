@@ -318,6 +318,10 @@ private struct RowView: View {
             Button(action: onTogglePin) {
                 Image(systemName: item.isPinned ? "star.fill" : "star")
                     .foregroundStyle(item.isPinned ? Color.yellow : (isSelected ? Self.selectionText.opacity(0.8) : Color.secondary))
+                    // Explicit hit box: the bare glyph (~15pt) left dead zones
+                    // around the visible icon, so edge clicks did nothing.
+                    .frame(width: 24, height: 24)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .opacity(showsActions || item.isPinned ? 1 : 0)
@@ -331,6 +335,8 @@ private struct RowView: View {
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(isSelected ? Self.selectionText.opacity(0.8) : Color.secondary)
+                    .frame(width: 24, height: 24)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .opacity(showsActions ? 1 : 0)

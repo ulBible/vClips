@@ -12,6 +12,10 @@ Download the latest `vClips-x.y.z.zip` from
 [Releases](https://github.com/ulBible/vClips/releases), unzip, and drag
 `vClips.app` into `/Applications`. Requires macOS 14+.
 
+vClips keeps itself up to date: it checks the latest release in the
+background (Sparkle) and offers new versions as they ship. You can also
+check manually via the menu-bar icon → **Check for Updates…**.
+
 ## Building from source
 
 ### Requirements

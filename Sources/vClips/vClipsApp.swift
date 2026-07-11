@@ -1,8 +1,14 @@
 import SwiftUI
+import Sparkle
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let env = AppEnvironment()
+    /// Sparkle auto-updates, fed by appcast.xml on the GitHub "latest" release
+    /// (SUFeedURL in Info.plist). Started eagerly so background update checks
+    /// run on the interval Sparkle persists in user defaults.
+    let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         env.start()
@@ -15,7 +21,7 @@ struct vClipsApp: App {
 
     var body: some Scene {
         MenuBarExtra("vClips", systemImage: "doc.on.clipboard") {
-            MenuContent(env: appDelegate.env)
+            MenuContent(env: appDelegate.env, updater: appDelegate.updaterController.updater)
         }
         .menuBarExtraStyle(.menu)
 
@@ -30,11 +36,18 @@ struct vClipsApp: App {
 /// Settings scene (the private `showSettingsWindow:` selector does nothing here).
 private struct MenuContent: View {
     let env: AppEnvironment
+    let updater: SPUUpdater
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         Button("History") {
             env.togglePopup()
+        }
+        Button("Check for Updates…") {
+            // Same LSUIElement caveat as Settings: activate first so the
+            // update dialog appears in front of the user's current app.
+            NSApp.activate(ignoringOtherApps: true)
+            updater.checkForUpdates()
         }
         Button("Settings…") {
             // As an LSUIElement accessory, vClips is never the active app on its

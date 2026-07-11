@@ -61,6 +61,19 @@ echo "==> Stamping version ${VERSION}"
   "${APP_BUNDLE}/Contents/Info.plist"
 
 echo "==> Signing with: ${DEV_ID}"
+# Sparkle's nested executables must each carry a hardened-runtime signature
+# or notarization rejects the bundle. Inside-out order, per Sparkle's docs.
+SPARKLE_B="${APP_BUNDLE}/Contents/Frameworks/Sparkle.framework/Versions/B"
+for nested in \
+  "${SPARKLE_B}/XPCServices/Installer.xpc" \
+  "${SPARKLE_B}/XPCServices/Downloader.xpc" \
+  "${SPARKLE_B}/Autoupdate" \
+  "${SPARKLE_B}/Updater.app" \
+  "${APP_BUNDLE}/Contents/Frameworks/Sparkle.framework"; do
+  [[ -e "${nested}" ]] || continue
+  codesign --force --options runtime --timestamp \
+    --preserve-metadata=entitlements --sign "${DEV_ID}" "${nested}"
+done
 # Hardened runtime + secure timestamp are notarization requirements.
 codesign --force --options runtime --timestamp \
   --sign "${DEV_ID}" "${APP_BUNDLE}"
@@ -68,7 +81,9 @@ codesign --verify --strict --verbose=2 "${APP_BUNDLE}"
 
 echo "==> Notarizing (profile: ${NOTARY_PROFILE}) — takes a few minutes"
 mkdir -p "${DIST_DIR}"
-rm -f "${ZIP_PATH}"
+# Old zips would end up in the appcast (and get re-signed) — keep dist/ to
+# exactly this release.
+rm -f "${DIST_DIR}"/*.zip "${DIST_DIR}"/appcast.xml
 ditto -c -k --keepParent "${APP_BUNDLE}" "${ZIP_PATH}"
 xcrun notarytool submit "${ZIP_PATH}" \
   --keychain-profile "${NOTARY_PROFILE}" --wait
@@ -83,5 +98,23 @@ ditto -c -k --keepParent "${APP_BUNDLE}" "${ZIP_PATH}"
 echo "==> Gatekeeper check"
 spctl --assess --type exec --verbose=2 "${APP_BUNDLE}"
 
-echo "==> Done: ${ZIP_PATH}"
-echo "Upload it to GitHub Releases: gh release create v${VERSION} ${ZIP_PATH}"
+echo "==> Generating Sparkle appcast"
+# The Sparkle SPM artifact ships the CLI tools; the EdDSA private key lives in
+# the login keychain (created once via generate_keys).
+APPCAST_TOOL=""
+for candidate in \
+  ".xcbuild/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast" \
+  ".build/artifacts/sparkle/Sparkle/bin/generate_appcast"; do
+  [[ -x "${candidate}" ]] && APPCAST_TOOL="${candidate}" && break
+done
+if [[ -z "${APPCAST_TOOL}" ]]; then
+  echo "error: generate_appcast not found — build once so SwiftPM fetches the Sparkle artifact." >&2
+  exit 1
+fi
+"${APPCAST_TOOL}" "${DIST_DIR}" \
+  --download-url-prefix "https://github.com/ulBible/vClips/releases/download/v${VERSION}/" \
+  --link "https://github.com/ulBible/vClips"
+
+echo "==> Done: ${ZIP_PATH} + ${DIST_DIR}/appcast.xml"
+echo "Publish BOTH files (the app reads appcast.xml from the latest release):"
+echo "  gh release create v${VERSION} ${ZIP_PATH} ${DIST_DIR}/appcast.xml"

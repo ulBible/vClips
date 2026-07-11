@@ -22,5 +22,11 @@
     <true/>
     <key>NSHumanReadableCopyright</key>
     <string>© 2026 ulBible. MIT License.</string>
+    <key>SUFeedURL</key>
+    <string>https://github.com/ulBible/vClips/releases/latest/download/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>8lnrMM16cLr17aVeuDUcalA1zgYV6q1ICfxZ+Eq9Pl0=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
 </dict>
 </plist>

@@ -75,6 +75,23 @@ if [[ "${copied_bundles}" -eq 0 ]]; then
   exit 1
 fi
 
+# Sparkle is a dynamic framework (binary xcframework artifact); embed it and
+# point @rpath at Contents/Frameworks, which the SwiftPM-built executable
+# doesn't carry by default.
+SPARKLE_FRAMEWORK=""
+for candidate in "${BUILD_DIR}/Sparkle.framework" "${BUILD_DIR}/PackageFrameworks/Sparkle.framework"; do
+  [[ -d "${candidate}" ]] && SPARKLE_FRAMEWORK="${candidate}" && break
+done
+if [[ -z "${SPARKLE_FRAMEWORK}" ]]; then
+  echo "error: Sparkle.framework not found in ${BUILD_DIR} — updates would crash the app at launch." >&2
+  exit 1
+fi
+mkdir -p "${APP_BUNDLE}/Contents/Frameworks"
+cp -R "${SPARKLE_FRAMEWORK}" "${APP_BUNDLE}/Contents/Frameworks/"
+# add_rpath fails if the entry already exists — harmless, so tolerate it.
+install_name_tool -add_rpath "@executable_path/../Frameworks" \
+  "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}" 2>/dev/null || true
+
 if [[ "${SIGN_IDENTITY}" == "-" ]]; then
   echo "==> Ad-hoc code signing (no stable identity found — Accessibility grant will reset each build)"
 else

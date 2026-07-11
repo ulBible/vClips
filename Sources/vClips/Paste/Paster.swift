@@ -36,7 +36,10 @@ final class Paster {
         let keyUp = CGEvent(keyboardEventSource: source, virtualKey: vKey, keyDown: false)
         keyUp?.flags = .maskCommand
 
-        keyDown?.post(tap: .cghidEventTap)
-        keyUp?.post(tap: .cghidEventTap)
+        // Session tap, not HID: the App Sandbox blocks posting at the HID
+        // level, while session-level synthetic events are allowed (given
+        // Accessibility). Non-sandboxed builds behave identically either way.
+        keyDown?.post(tap: .cgSessionEventTap)
+        keyUp?.post(tap: .cgSessionEventTap)
     }
 }

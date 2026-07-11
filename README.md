@@ -3,6 +3,10 @@
 A macOS-native menu-bar clipboard manager: text history, search, and pinned favorites,
 summoned anywhere with ⌘⇧V and auto-pasted into the focused app.
 
+<p align="center">
+  <img src="docs/images/popup.png" width="420" alt="vClips popup showing pinned and recent clipboard items with search and preview">
+</p>
+
 ## Install
 Download the latest `vClips-x.y.z.zip` from
 [Releases](https://github.com/ulBible/vClips/releases), unzip, and drag

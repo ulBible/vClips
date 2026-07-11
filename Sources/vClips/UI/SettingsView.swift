@@ -1,6 +1,12 @@
 import SwiftUI
 import KeyboardShortcuts
 
+enum SupportLinks {
+    // TODO: placeholder until the donation account exists — update before the
+    // first public release (GitHub Sponsors / Ko-fi / Buy Me a Coffee).
+    static let donation = URL(string: "https://github.com/sponsors/ulBible")!
+}
+
 struct SettingsView: View {
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var launchAtLoginError: String?
@@ -34,6 +40,15 @@ struct SettingsView: View {
                     .font(.callout)
                     .foregroundStyle(.red)
             }
+
+            Divider()
+
+            HStack {
+                Text("vClips is free.")
+                    .foregroundStyle(.secondary)
+                Link("Support development ❤️", destination: SupportLinks.donation)
+            }
+            .font(.callout)
         }
         .padding(20)
         .frame(width: 360)

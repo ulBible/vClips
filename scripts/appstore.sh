@@ -118,6 +118,11 @@ if [[ ! -f "${PROFILE}" ]]; then
 fi
 cp "${PROFILE}" "${APP_BUNDLE}/Contents/embedded.provisionprofile"
 
+# Browser-downloaded files (like the provisioning profile) carry
+# com.apple.quarantine, which App Store processing rejects with error 91109
+# if it survives inside the package — strip every xattr from the bundle.
+xattr -cr "${APP_BUNDLE}"
+
 ENT="$(mktemp -t vclips-mas).entitlements"
 sed -e "s/TEAM_ID/${TEAM_ID}/g" -e "s/BUNDLE_ID/${BUNDLE_ID}/g" \
   Resources/vClips-AppStore.entitlements > "${ENT}"

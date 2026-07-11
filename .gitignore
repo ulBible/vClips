@@ -2,3 +2,6 @@
 build/
 .build/
 .xcbuild/
+
+# Mac App Store provisioning profile (per-machine secret-ish; do not commit)
+Resources/*.provisionprofile

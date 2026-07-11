@@ -1,6 +1,6 @@
 import XCTest
 import KeyboardShortcuts
-@testable import vClips
+@testable import vClipsCore
 
 final class ShortcutsTests: XCTestCase {
     func test_togglePopup_defaultIsCommandShiftV() {

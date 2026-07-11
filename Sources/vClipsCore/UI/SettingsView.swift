@@ -2,12 +2,14 @@ import SwiftUI
 import KeyboardShortcuts
 
 enum SupportLinks {
-    // TODO: placeholder until the donation account exists — update before the
-    // first public release (GitHub Sponsors / Ko-fi / Buy Me a Coffee).
+    // Goes live once the GitHub Sponsors profile is approved & published.
     static let donation = URL(string: "https://github.com/sponsors/ulBible")!
 }
 
-struct SettingsView: View {
+public struct SettingsView: View {
+    /// The App Store build passes `false`: App Review guideline 3.1.1 forbids
+    /// linking out to external payment, so the donation row must not ship there.
+    private let showsSupportLink: Bool
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var launchAtLoginError: String?
     /// Marks the onChange fired by our own revert below so it isn't treated
@@ -16,7 +18,11 @@ struct SettingsView: View {
     /// (isEnabled false) while still registered, making OFF a no-op forever.
     @State private var revertingLaunchAtLogin = false
 
-    var body: some View {
+    public init(showsSupportLink: Bool = true) {
+        self.showsSupportLink = showsSupportLink
+    }
+
+    public var body: some View {
         Form {
             KeyboardShortcuts.Recorder("Open clipboard popup:", name: .togglePopup)
 
@@ -41,14 +47,16 @@ struct SettingsView: View {
                     .foregroundStyle(.red)
             }
 
-            Divider()
+            if showsSupportLink {
+                Divider()
 
-            HStack {
-                Text("vClips is free.")
-                    .foregroundStyle(.secondary)
-                Link("Support development ❤️", destination: SupportLinks.donation)
+                HStack {
+                    Text("vClips is free.")
+                        .foregroundStyle(.secondary)
+                    Link("Support development ❤️", destination: SupportLinks.donation)
+                }
+                .font(.callout)
             }
-            .font(.callout)
         }
         .padding(20)
         .frame(width: 360)

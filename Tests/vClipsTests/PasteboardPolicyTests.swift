@@ -1,5 +1,5 @@
 import XCTest
-@testable import vClips
+@testable import vClipsCore
 
 final class PasteboardPolicyTests: XCTestCase {
     func test_allowsPlainTextTypes() {

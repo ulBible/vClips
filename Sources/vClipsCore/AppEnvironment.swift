@@ -3,7 +3,7 @@ import SwiftData
 import KeyboardShortcuts
 
 @MainActor
-final class AppEnvironment: ObservableObject {
+public final class AppEnvironment: ObservableObject {
     let container: ModelContainer
     let store: HistoryStore
     let monitor: ClipboardMonitor
@@ -11,7 +11,7 @@ final class AppEnvironment: ObservableObject {
     private(set) var popup: PopupController!
     private(set) var viewModel: PopupViewModel!
 
-    init() {
+    public init() {
         let container = try! ModelContainerFactory.onDisk()
         self.container = container
         let store = HistoryStore(container: container)
@@ -41,7 +41,7 @@ final class AppEnvironment: ObservableObject {
         }
     }
 
-    func start() {
+    public func start() {
         monitor.start()
         KeyboardShortcuts.onKeyDown(for: .togglePopup) { [weak self] in
             self?.togglePopup()
@@ -51,7 +51,7 @@ final class AppEnvironment: ObservableObject {
         }
     }
 
-    func togglePopup() {
+    public func togglePopup() {
         viewModel.reset()
         popup.toggle()
     }

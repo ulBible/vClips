@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>vClips</title>
+        <item>
+            <title>1.1.0</title>
+            <pubDate>Sat, 11 Jul 2026 16:59:30 +0900</pubDate>
+            <link>https://github.com/ulBible/vClips</link>
+            <sparkle:version>51</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/ulBible/vClips/releases/download/v1.1.0/vClips-1.1.0.zip" length="1557601" type="application/octet-stream" sparkle:edSignature="xnz3bI5VpzX9Kl3ryTJUW3Y9rZlVKYpzWc6L5NXMydFEqpcizi/j1O3C+rnI6wBTKMopm/zfzui3YtiU0bt2AA=="/>
+        </item>
+    </channel>
+</rss>

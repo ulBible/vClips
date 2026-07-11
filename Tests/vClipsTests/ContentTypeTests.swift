@@ -1,5 +1,5 @@
 import XCTest
-@testable import vClips
+@testable import vClipsCore
 
 final class ContentTypeTests: XCTestCase {
     func test_detectsURL() {

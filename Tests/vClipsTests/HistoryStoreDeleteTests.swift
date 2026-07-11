@@ -1,6 +1,6 @@
 import XCTest
 import SwiftData
-@testable import vClips
+@testable import vClipsCore
 
 @MainActor
 final class HistoryStoreDeleteTests: XCTestCase {

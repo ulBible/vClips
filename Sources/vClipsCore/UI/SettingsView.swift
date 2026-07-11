@@ -59,6 +59,8 @@ public struct SettingsView: View {
             }
         }
         .padding(20)
-        .frame(width: 360)
+        // Size the window to fit the content: a fixed width clipped both the
+        // recorder's leading label and the support link's trailing emoji.
+        .fixedSize()
     }
 }

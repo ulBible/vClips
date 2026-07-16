@@ -3,7 +3,11 @@ import AppKit
 
 public enum AccessibilityPermission {
     public static var isTrusted: Bool {
-        AXIsProcessTrusted()
+        // Test hook: `defaults write com.vclips.app SimulateUntrusted -bool true`
+        // exercises the copy-only path and the AutoPasteOffer dialog without
+        // resetting the real TCC grant (tccutil would hit the user's install).
+        if UserDefaults.standard.bool(forKey: "SimulateUntrusted") { return false }
+        return AXIsProcessTrusted()
     }
 
     /// Shows the system prompt asking the user to grant Accessibility access.

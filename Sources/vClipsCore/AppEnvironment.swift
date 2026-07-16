@@ -46,9 +46,10 @@ public final class AppEnvironment: ObservableObject {
         KeyboardShortcuts.onKeyDown(for: .togglePopup) { [weak self] in
             self?.togglePopup()
         }
-        if !AccessibilityPermission.isTrusted {
-            AccessibilityPermission.prompt()
-        }
+        // Deliberately no Accessibility prompt here: the permission is offered
+        // contextually on the first paste attempt instead (AutoPasteOffer),
+        // matching the pattern of Mac App Store clipboard managers and App
+        // Review's expectation that the permission stays optional.
     }
 
     public func togglePopup() {

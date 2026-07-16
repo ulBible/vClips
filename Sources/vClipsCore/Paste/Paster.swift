@@ -17,7 +17,10 @@ final class Paster {
         monitor.markSelfCopy()
 
         guard AccessibilityPermission.isTrusted else {
-            return // copy-only fallback; user pastes manually with ⌘V
+            // Copy-only fallback; on the first occurrence, explain how to
+            // enable auto-paste (never prompted at launch).
+            AutoPasteOffer.offerIfNeeded()
+            return
         }
         // Wait for the popup to close and focus to return to the previous app
         // before synthesizing ⌘V, so the keystroke lands in that app.

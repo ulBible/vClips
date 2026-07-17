@@ -75,3 +75,11 @@ certificate and notary-credential setup.
 
 ## License
 [MIT](LICENSE)
+
+---
+
+<p align="center">
+  <a href="https://github.com/ulBible">
+    <img src="docs/images/brand-logo.png" width="330" alt="Chakchak Works — two blocks snapping into place">
+  </a>
+</p>

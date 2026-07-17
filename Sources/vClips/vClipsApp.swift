@@ -13,7 +13,11 @@ import vClipsCore
 /// any modal shows so it always fronts.
 final class UpdaterUIDelegate: NSObject, SPUStandardUserDriverDelegate {
     func standardUserDriverWillShowModalAlert() {
-        NSApp.activate(ignoringOtherApps: true)
+        // Sparkle delivers user-driver callbacks on the main thread; the
+        // protocol just isn't annotated, so bridge the isolation explicitly.
+        MainActor.assumeIsolated {
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 }
 

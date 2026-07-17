@@ -9,11 +9,16 @@ import SwiftUI
 public struct MenuContent: View {
     private let env: AppEnvironment
     private let checkForUpdates: (() -> Void)?
+    /// The App Store build passes `false` — no external donation links there
+    /// (App Review guideline 3.1.1); mirrors SettingsView's parameter.
+    private let showsSupportLink: Bool
     @Environment(\.openSettings) private var openSettings
 
-    public init(env: AppEnvironment, checkForUpdates: (() -> Void)? = nil) {
+    public init(env: AppEnvironment, checkForUpdates: (() -> Void)? = nil,
+                showsSupportLink: Bool = true) {
         self.env = env
         self.checkForUpdates = checkForUpdates
+        self.showsSupportLink = showsSupportLink
     }
 
     public var body: some View {
@@ -35,6 +40,9 @@ public struct MenuContent: View {
             NSApp.activate(ignoringOtherApps: true)
             openSettings()
             raiseSettingsWindow()
+        }
+        Button("About vClips") {
+            AboutPanel.show(showsSupportLink: showsSupportLink)
         }
         if !AccessibilityPermission.isTrusted {
             Divider()

@@ -3,6 +3,8 @@
 A macOS-native menu-bar clipboard manager: text history, search, and pinned favorites,
 summoned anywhere with ⌘⇧V and auto-pasted into the focused app.
 
+*A **Chakchak Works** app — small Mac tools that snap right in.*
+
 <p align="center">
   <img src="docs/images/popup.png" width="420" alt="vClips popup showing pinned and recent clipboard items with search and preview">
 </p>

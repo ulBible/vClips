@@ -21,7 +21,7 @@ struct vClipsApp: App {
 
     var body: some Scene {
         MenuBarExtra("vClips", systemImage: "doc.on.clipboard") {
-            MenuContent(env: appDelegate.env)
+            MenuContent(env: appDelegate.env, showsSupportLink: false)
         }
         .menuBarExtraStyle(.menu)
 

@@ -62,6 +62,16 @@ cp "${BUILD_DIR}/${APP_NAME}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 cp "Resources/Info.plist" "${APP_BUNDLE}/Contents/Info.plist"
 cp "Resources/AppIcon.icns" "${APP_BUNDLE}/Contents/Resources/AppIcon.icns"
 
+# Stamp dev builds from the latest release tag so the About panel shows a
+# truthful version; release.sh overwrites this with the exact release number.
+LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+if [[ -n "${LATEST_TAG}" ]]; then
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${LATEST_TAG}-dev" \
+    "${APP_BUNDLE}/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git rev-list --count HEAD)" \
+    "${APP_BUNDLE}/Contents/Info.plist"
+fi
+
 # Package resource bundles, found via Bundle.main.resourceURL at runtime.
 copied_bundles=0
 for resource_bundle in "${BUILD_DIR}"/*.bundle; do

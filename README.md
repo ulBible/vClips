@@ -3,7 +3,7 @@
 A macOS-native menu-bar clipboard manager: text history, search, and pinned favorites,
 summoned anywhere with ⌘⇧V and auto-pasted into the focused app.
 
-*A **Chakchak Works** app — small Mac tools that snap right in.*
+*A **Chakchak Works** app — small tools that snap right in.*
 
 <p align="center">
   <img src="docs/images/popup.png" width="420" alt="vClips popup showing pinned and recent clipboard items with search and preview">
@@ -80,6 +80,6 @@ certificate and notary-credential setup.
 
 <p align="center">
   <a href="https://github.com/ulBible">
-    <img src="docs/images/brand-logo.png" width="330" alt="Chakchak Works — two blocks snapping into place">
+    <img src="docs/images/brand-logo.png" width="330" alt="Chakchak Works — the last block being set into place">
   </a>
 </p>

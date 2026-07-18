@@ -97,7 +97,9 @@ public enum AboutPanel {
         let text = NSMutableAttributedString()
         let attachment = NSTextAttachment()
         attachment.image = markImage()
-        attachment.bounds = CGRect(x: 0, y: 0, width: 64, height: 70)
+        // y offset lifts the mark above the baseline — breathing room between
+        // the bottom block row and the tagline below.
+        attachment.bounds = CGRect(x: 0, y: 10, width: 64, height: 70)
         let mark = NSMutableAttributedString(attachment: attachment)
         mark.addAttribute(.paragraphStyle, value: center,
                           range: NSRange(location: 0, length: mark.length))

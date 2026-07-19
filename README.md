@@ -10,9 +10,18 @@ summoned anywhere with ⌘⇧V and auto-pasted into the focused app.
 </p>
 
 ## Install
-Download the latest `vClips-x.y.z.zip` from
+Requires macOS 14+ (Apple Silicon).
+
+**Homebrew**
+```bash
+brew install --cask ulBible/tap/vclips
+```
+
+**Direct download** — grab the latest `vClips-x.y.z.zip` from
 [Releases](https://github.com/ulBible/vClips/releases), unzip, and drag
-`vClips.app` into `/Applications`. Requires macOS 14+.
+`vClips.app` into `/Applications`. The app is notarized by Apple; on first
+launch macOS shows its standard "downloaded from the internet" confirmation —
+click **Open**.
 
 vClips keeps itself up to date: it checks the latest release in the
 background (Sparkle) and offers new versions as they ship. You can also

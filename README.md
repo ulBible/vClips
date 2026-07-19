@@ -17,11 +17,12 @@ Requires macOS 14+ (Apple Silicon).
 brew install --cask ulBible/tap/vclips
 ```
 
-**Direct download** — grab the latest `vClips-x.y.z.zip` from
-[Releases](https://github.com/ulBible/vClips/releases), unzip, and drag
-`vClips.app` into `/Applications`. The app is notarized by Apple; on first
+**Direct download** — grab the latest `vClips-x.y.z.dmg` from
+[Releases](https://github.com/ulBible/vClips/releases), open it, and drag
+`vClips.app` into `Applications`. The app is notarized by Apple; on first
 launch macOS shows its standard "downloaded from the internet" confirmation —
-click **Open**.
+click **Open**. (If you use the `.zip` instead, extract it with the built-in
+Archive Utility — third-party unzip tools can break the code signature.)
 
 vClips keeps itself up to date: it checks the latest release in the
 background (Sparkle) and offers new versions as they ship. You can also

@@ -1,5 +1,6 @@
 import SwiftUI
 import Sparkle
+import vClipsAutoPaste
 import vClipsCore
 
 // The GitHub-release variant: Sparkle auto-updates and a donation link.
@@ -23,7 +24,9 @@ final class UpdaterUIDelegate: NSObject, SPUStandardUserDriverDelegate {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    let env = AppEnvironment()
+    // The only place the Accessibility engine is injected — and the only
+    // executable that links the vClipsAutoPaste target at all.
+    let env = AppEnvironment(autoPasteEngine: AccessibilityAutoPaste())
     /// Sparkle auto-updates, fed by appcast.xml on the GitHub "latest" release
     /// (SUFeedURL in Info.plist). Started eagerly so background update checks
     /// run on the interval Sparkle persists in user defaults.

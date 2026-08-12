@@ -1,9 +1,9 @@
 import AppKit
 
 /// One-time, contextual Accessibility onboarding, shown the first time the
-/// user pastes without the permission — direct-distribution build only (the
-/// MAS build never reaches this: its Paster is not autoPasteCapable). Never
-/// prompts at launch; stays copy-only if declined.
+/// user pastes without the permission — direct-distribution build only (this
+/// whole target is absent from the MAS binary, which has no engine at all).
+/// Never prompts at launch; stays copy-only if declined.
 @MainActor
 enum AutoPasteOffer {
     private static let offeredKey = "didOfferAutoPaste"

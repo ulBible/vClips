@@ -10,12 +10,17 @@ public final class AppEnvironment: ObservableObject {
     private(set) var paster: Paster!
     private(set) var popup: PopupController!
     private(set) var viewModel: PopupViewModel!
-    /// false in the Mac App Store build: auto-paste (and every mention of
-    /// Accessibility) is compiled in but unreachable there. Injected from the
+    /// nil in the Mac App Store build, which depends on vClipsCore alone:
+    /// the engine (and with it every Accessibility symbol and string) lives in
+    /// the direct-distribution-only vClipsAutoPaste target. Injected from the
     /// entry points, mirroring MenuContent/SettingsView's showsSupportLink.
+    let autoPasteEngine: AutoPasteEngine?
+    /// Derived convenience: false ⇒ copy-only build.
     public let autoPasteCapable: Bool
 
-    public init(autoPasteCapable: Bool = true) {
+    public init(autoPasteEngine: AutoPasteEngine?) {
+        self.autoPasteEngine = autoPasteEngine
+        let autoPasteCapable = autoPasteEngine != nil
         self.autoPasteCapable = autoPasteCapable
         let container = try! ModelContainerFactory.onDisk()
         self.container = container
@@ -24,7 +29,7 @@ public final class AppEnvironment: ObservableObject {
         self.monitor = ClipboardMonitor { content in
             store.capture(content)
         }
-        self.paster = Paster(monitor: self.monitor, autoPasteCapable: autoPasteCapable)
+        self.paster = Paster(monitor: self.monitor, engine: autoPasteEngine)
 
         self.viewModel = PopupViewModel(store: store, onChoose: { [weak self] item in
             self?.choose(item)

@@ -1,6 +1,4 @@
 import AppKit
-import Carbon.HIToolbox
-import CoreGraphics
 
 @MainActor
 final class Paster {
@@ -8,17 +6,18 @@ final class Paster {
     /// matrix is unit-testable without AppKit.
     enum Action: Equatable { case copyOnly, synthesize }
 
-    nonisolated static func action(autoPasteCapable: Bool, trusted: Bool) -> Action {
-        (autoPasteCapable && trusted) ? .synthesize : .copyOnly
+    nonisolated static func action(hasEngine: Bool, trusted: Bool) -> Action {
+        (hasEngine && trusted) ? .synthesize : .copyOnly
     }
 
     private let monitor: ClipboardMonitor
-    /// false in the Mac App Store build: the AX/synthesis path is unreachable.
-    private let autoPasteCapable: Bool
+    /// nil in the Mac App Store build: nothing Accessibility-flavored is even
+    /// linked there (the engine lives in the vClipsAutoPaste target).
+    private let engine: AutoPasteEngine?
 
-    init(monitor: ClipboardMonitor, autoPasteCapable: Bool = true) {
+    init(monitor: ClipboardMonitor, engine: AutoPasteEngine?) {
         self.monitor = monitor
-        self.autoPasteCapable = autoPasteCapable
+        self.engine = engine
     }
 
     func paste(_ content: String) {
@@ -27,38 +26,19 @@ final class Paster {
         pb.setString(content, forType: .string)
         monitor.markSelfCopy()
 
-        // && short-circuits: the MAS build (autoPasteCapable == false) never
-        // evaluates isTrusted, so no AX API call can ever happen there.
-        let trusted = autoPasteCapable && AccessibilityPermission.isTrusted
-        switch Self.action(autoPasteCapable: autoPasteCapable, trusted: trusted) {
-        case .copyOnly:
-            // Direct build only: the one-time explainer replaces the toast
-            // for that single copy (its message already says "press ⌘V").
-            let offered = autoPasteCapable && AutoPasteOffer.offerIfNeeded()
-            if !offered { CopyToast.shared.show() }
-        case .synthesize:
-            // Wait for the popup to close and focus to return to the previous
-            // app before synthesizing ⌘V, so the keystroke lands in that app.
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(120))
-                self.synthesizeCommandV()
-            }
+        // MAS build: engine is nil — nothing Accessibility-flavored is linked.
+        guard let engine else { CopyToast.shared.show(); return }
+        guard engine.isTrusted else {
+            // Direct build only: the one-time explainer replaces the toast for
+            // that single copy (its message already says "press ⌘V").
+            if !engine.offerIfNeeded() { CopyToast.shared.show() }
+            return
         }
-    }
-
-    private func synthesizeCommandV() {
-        let source = CGEventSource(stateID: .combinedSessionState)
-        let vKey = CGKeyCode(kVK_ANSI_V)
-
-        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: vKey, keyDown: true)
-        keyDown?.flags = .maskCommand
-        let keyUp = CGEvent(keyboardEventSource: source, virtualKey: vKey, keyDown: false)
-        keyUp?.flags = .maskCommand
-
-        // Session tap, not HID: the App Sandbox blocks posting at the HID
-        // level, while session-level synthetic events are allowed (given
-        // Accessibility). Non-sandboxed builds behave identically either way.
-        keyDown?.post(tap: .cgSessionEventTap)
-        keyUp?.post(tap: .cgSessionEventTap)
+        // Wait for the popup to close and focus to return to the previous app
+        // before synthesizing ⌘V, so the keystroke lands in that app.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(120))
+            if !engine.synthesize() { CopyToast.shared.show() }
+        }
     }
 }

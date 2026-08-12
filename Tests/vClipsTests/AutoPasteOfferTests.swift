@@ -1,5 +1,5 @@
 import XCTest
-@testable import vClipsCore
+@testable import vClipsAutoPaste
 
 @MainActor
 final class AutoPasteOfferTests: XCTestCase {

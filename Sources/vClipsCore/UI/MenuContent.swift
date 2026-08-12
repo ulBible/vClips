@@ -44,13 +44,11 @@ public struct MenuContent: View {
         Button("About vClips") {
             AboutPanel.show(showsSupportLink: showsSupportLink)
         }
-        // Hidden entirely in the MAS build; && short-circuits so the AX API
-        // is never queried there either.
-        if env.autoPasteCapable && !AccessibilityPermission.isTrusted {
+        // Absent from the MAS build: there is no engine there, and both the
+        // AX call and the item's wording live in the vClipsAutoPaste target.
+        if let engine = env.autoPasteEngine, !engine.isTrusted {
             Divider()
-            Button("Grant Accessibility (for auto-paste)…") {
-                AccessibilityPermission.openSettings()
-            }
+            Button(engine.grantMenuTitle) { engine.openSystemSettings() }
         }
         Divider()
         Button("Quit vClips") { NSApplication.shared.terminate(nil) }

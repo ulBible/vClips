@@ -27,17 +27,22 @@ final class Paster {
         pb.setString(content, forType: .string)
         monitor.markSelfCopy()
 
-        guard AccessibilityPermission.isTrusted else {
-            // Copy-only fallback; on the first occurrence, explain how to
-            // enable auto-paste (never prompted at launch).
-            AutoPasteOffer.offerIfNeeded()
-            return
-        }
-        // Wait for the popup to close and focus to return to the previous app
-        // before synthesizing ⌘V, so the keystroke lands in that app.
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(120))
-            self.synthesizeCommandV()
+        // && short-circuits: the MAS build (autoPasteCapable == false) never
+        // evaluates isTrusted, so no AX API call can ever happen there.
+        let trusted = autoPasteCapable && AccessibilityPermission.isTrusted
+        switch Self.action(autoPasteCapable: autoPasteCapable, trusted: trusted) {
+        case .copyOnly:
+            // Direct build only: the one-time explainer replaces the toast
+            // for that single copy (its message already says "press ⌘V").
+            let offered = autoPasteCapable && AutoPasteOffer.offerIfNeeded()
+            if !offered { CopyToast.shared.show() }
+        case .synthesize:
+            // Wait for the popup to close and focus to return to the previous
+            // app before synthesizing ⌘V, so the keystroke lands in that app.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(120))
+                self.synthesizeCommandV()
+            }
         }
     }
 

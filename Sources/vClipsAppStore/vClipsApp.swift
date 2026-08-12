@@ -8,7 +8,12 @@ import vClipsCore
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    let env = AppEnvironment()
+    // Copy-only on the App Store: guideline 2.4.5 disallows Accessibility-
+    // based paste synthesis, so this variant ships with no engine — the
+    // vClipsAutoPaste target is not among this executable's dependencies, so
+    // no AX symbol or wording can reach this binary (scripts/appstore.sh
+    // verifies that with nm/strings on every build).
+    let env = AppEnvironment(autoPasteEngine: nil)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         env.start()

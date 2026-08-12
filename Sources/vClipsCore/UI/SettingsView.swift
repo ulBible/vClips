@@ -17,6 +17,7 @@ public struct SettingsView: View {
     /// swallow real toggles: a self-signed app can sit in .requiresApproval
     /// (isEnabled false) while still registered, making OFF a no-op forever.
     @State private var revertingLaunchAtLogin = false
+    @AppStorage("showCopyToast") private var showCopyToast = true
 
     public init(showsSupportLink: Bool = true) {
         self.showsSupportLink = showsSupportLink
@@ -46,6 +47,9 @@ public struct SettingsView: View {
                     .font(.callout)
                     .foregroundStyle(.red)
             }
+
+            Toggle("Show a \u{201C}⌘V to paste\u{201D} reminder after copying",
+                   isOn: $showCopyToast)
 
             if showsSupportLink {
                 Divider()

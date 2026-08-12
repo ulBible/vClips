@@ -3,11 +3,27 @@ import AppKit
 
 struct PopupView: View {
     @ObservedObject var model: PopupViewModel
+    /// "Paste" on the direct-distribution build, "Copy" on the Mac App Store
+    /// build (which has no Accessibility-based auto-paste) — set from
+    /// AppEnvironment's autoPasteCapable flag.
+    let pasteKeyHintLabel: String
     let onEscape: () -> Void
     /// Called when the amount of content changes so the panel can re-fit its
     /// height to the SwiftUI ideal size.
     let onContentChange: () -> Void
     @FocusState private var searchFocused: Bool
+
+    init(
+        model: PopupViewModel,
+        pasteKeyHintLabel: String = "Paste",
+        onEscape: @escaping () -> Void,
+        onContentChange: @escaping () -> Void
+    ) {
+        self.model = model
+        self.pasteKeyHintLabel = pasteKeyHintLabel
+        self.onEscape = onEscape
+        self.onContentChange = onContentChange
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -228,7 +244,7 @@ struct PopupView: View {
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
             Spacer()
-            KeyHint(key: "⏎", label: "Paste")
+            KeyHint(key: "⏎", label: pasteKeyHintLabel)
             KeyHint(key: "⌘F", label: "Pin")
             KeyHint(key: "⌘⌫", label: "Delete")
         }

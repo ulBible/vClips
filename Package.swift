@@ -24,10 +24,21 @@ let package = Package(
             ],
             path: "Sources/vClipsCore"
         ),
+        // Auto-paste, and with it every Accessibility API call and every
+        // user-facing mention of the permission. Deliberately NOT a
+        // dependency of vClipsAppStore: App Review guideline 2.4.5 means the
+        // store binary must not even link these symbols, which a runtime flag
+        // inside vClipsCore could not guarantee.
+        .target(
+            name: "vClipsAutoPaste",
+            dependencies: ["vClipsCore"],
+            path: "Sources/vClipsAutoPaste"
+        ),
         .executableTarget(
             name: "vClips",
             dependencies: [
                 "vClipsCore",
+                "vClipsAutoPaste",
                 .product(name: "Sparkle", package: "Sparkle"),
             ],
             path: "Sources/vClips"
@@ -43,6 +54,7 @@ let package = Package(
             name: "vClipsTests",
             dependencies: [
                 "vClipsCore",
+                "vClipsAutoPaste",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ],
             path: "Tests/vClipsTests"

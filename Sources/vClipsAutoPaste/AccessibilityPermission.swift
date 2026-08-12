@@ -1,8 +1,10 @@
 import ApplicationServices
 import AppKit
 
-public enum AccessibilityPermission {
-    public static var isTrusted: Bool {
+/// Direct-distribution only — this target is never linked into the Mac App
+/// Store executable, so `AXIsProcessTrusted*` cannot appear in that binary.
+enum AccessibilityPermission {
+    static var isTrusted: Bool {
         // Test hook: `defaults write com.vclips.app SimulateUntrusted -bool true`
         // exercises the copy-only path and the AutoPasteOffer dialog without
         // resetting the real TCC grant (tccutil would hit the user's install).
@@ -17,7 +19,7 @@ public enum AccessibilityPermission {
         _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
     }
 
-    public static func openSettings() {
+    static func openSettings() {
         let url = URL(string:
             "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
         NSWorkspace.shared.open(url)

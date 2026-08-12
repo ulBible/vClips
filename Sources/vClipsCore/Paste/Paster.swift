@@ -1,13 +1,15 @@
 import AppKit
-import Carbon.HIToolbox
-import CoreGraphics
 
 @MainActor
 final class Paster {
     private let monitor: ClipboardMonitor
+    /// nil in the Mac App Store build: nothing Accessibility-flavored is even
+    /// linked there (the engine lives in the vClipsAutoPaste target).
+    private let engine: AutoPasteEngine?
 
-    init(monitor: ClipboardMonitor) {
+    init(monitor: ClipboardMonitor, engine: AutoPasteEngine?) {
         self.monitor = monitor
+        self.engine = engine
     }
 
     func paste(_ content: String) {
@@ -16,33 +18,19 @@ final class Paster {
         pb.setString(content, forType: .string)
         monitor.markSelfCopy()
 
-        guard AccessibilityPermission.isTrusted else {
-            // Copy-only fallback; on the first occurrence, explain how to
-            // enable auto-paste (never prompted at launch).
-            AutoPasteOffer.offerIfNeeded()
+        // MAS build: engine is nil — nothing Accessibility-flavored is linked.
+        guard let engine else { CopyToast.shared.show(); return }
+        guard engine.isTrusted else {
+            // Direct build only: the one-time explainer replaces the toast for
+            // that single copy (its message already says "press ⌘V").
+            if !engine.offerIfNeeded() { CopyToast.shared.show() }
             return
         }
         // Wait for the popup to close and focus to return to the previous app
         // before synthesizing ⌘V, so the keystroke lands in that app.
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(120))
-            self.synthesizeCommandV()
+            if !engine.synthesize() { CopyToast.shared.show() }
         }
-    }
-
-    private func synthesizeCommandV() {
-        let source = CGEventSource(stateID: .combinedSessionState)
-        let vKey = CGKeyCode(kVK_ANSI_V)
-
-        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: vKey, keyDown: true)
-        keyDown?.flags = .maskCommand
-        let keyUp = CGEvent(keyboardEventSource: source, virtualKey: vKey, keyDown: false)
-        keyUp?.flags = .maskCommand
-
-        // Session tap, not HID: the App Sandbox blocks posting at the HID
-        // level, while session-level synthetic events are allowed (given
-        // Accessibility). Non-sandboxed builds behave identically either way.
-        keyDown?.post(tap: .cgSessionEventTap)
-        keyUp?.post(tap: .cgSessionEventTap)
     }
 }

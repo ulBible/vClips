@@ -4,7 +4,7 @@
 <dict>
     <!-- Mandatory for Mac App Store distribution. vClips needs nothing else:
          clipboard read/write and RegisterEventHotKey are sandbox-allowed, and
-         auto-paste rides on the user-granted Accessibility permission.
+         this build is copy-only — it uses no AX permission at all.
          TEAM_ID/BUNDLE_ID placeholders are filled in by scripts/appstore.sh. -->
     <key>com.apple.security.app-sandbox</key>
     <true/>

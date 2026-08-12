@@ -70,11 +70,12 @@ fi
 # vClipsAutoPaste target ever leaks back into this variant. Runs before
 # signing so it inspects the compiled code alone.
 BIN="${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
+[[ -x "${BIN}" ]] || { echo "error: 2.4.5 gate found no binary at ${BIN}" >&2; exit 1; }
 if nm -u "${BIN}" | grep -q "AXIsProcess"; then
   echo "error: MAS binary links Accessibility APIs (AXIsProcess*)" >&2; exit 1
 fi
-if strings -a "${BIN}" | grep -qi "accessib"; then
-  echo "error: MAS binary contains Accessibility wording" >&2; exit 1
+if strings -a "${BIN}" | grep -qi -e "accessib" -e "auto-paste"; then
+  echo "error: MAS binary contains Accessibility/auto-paste wording" >&2; exit 1
 fi
 echo "==> Guideline 2.4.5 gate passed (no AX symbols or wording in the binary)"
 

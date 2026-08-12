@@ -2,14 +2,6 @@ import AppKit
 
 @MainActor
 final class Paster {
-    /// Which way a paste request resolves. Pure decision, kept static so the
-    /// matrix is unit-testable without AppKit.
-    enum Action: Equatable { case copyOnly, synthesize }
-
-    nonisolated static func action(hasEngine: Bool, trusted: Bool) -> Action {
-        (hasEngine && trusted) ? .synthesize : .copyOnly
-    }
-
     private let monitor: ClipboardMonitor
     /// nil in the Mac App Store build: nothing Accessibility-flavored is even
     /// linked there (the engine lives in the vClipsAutoPaste target).

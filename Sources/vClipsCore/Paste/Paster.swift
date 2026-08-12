@@ -4,10 +4,21 @@ import CoreGraphics
 
 @MainActor
 final class Paster {
-    private let monitor: ClipboardMonitor
+    /// Which way a paste request resolves. Pure decision, kept static so the
+    /// matrix is unit-testable without AppKit.
+    enum Action: Equatable { case copyOnly, synthesize }
 
-    init(monitor: ClipboardMonitor) {
+    nonisolated static func action(autoPasteCapable: Bool, trusted: Bool) -> Action {
+        (autoPasteCapable && trusted) ? .synthesize : .copyOnly
+    }
+
+    private let monitor: ClipboardMonitor
+    /// false in the Mac App Store build: the AX/synthesis path is unreachable.
+    private let autoPasteCapable: Bool
+
+    init(monitor: ClipboardMonitor, autoPasteCapable: Bool = true) {
         self.monitor = monitor
+        self.autoPasteCapable = autoPasteCapable
     }
 
     func paste(_ content: String) {

@@ -28,28 +28,36 @@ macOS의 모든 키 입력 합성 경로가 같은 동의 체계 뒤에 있으�
 
 ## 설계
 
-### 1. 변형 플래그
+### 1. 엔진 심(seam) 주입 — 타깃 분리
 
-`AppEnvironment(autoPasteCapable: Bool)` — 기존 `showsSupportLink` 패턴을
-따라 엔트리포인트에서 주입한다:
+처음 설계는 런타임 Bool 플래그였으나, 공유 모듈(vClipsCore) 특성상 MAS
+바이너리에 AX 심볼(`_AXIsProcessTrusted*`)과 "Grant Accessibility…" 문자열이
+그대로 링크되어 남는 문제가 리뷰에서 실증되었다. 그래서 **구조적으로**
+분리한다:
 
-- `Sources/vClips/vClipsApp.swift` → `true`
-- `Sources/vClipsAppStore/vClipsApp.swift` → `false`
+- vClipsCore에 `AutoPasteEngine` 프로토콜(@MainActor: `isTrusted`,
+  `offerIfNeeded() -> Bool`, `synthesize() -> Bool`, `grantMenuTitle`,
+  `openSystemSettings()`)만 정의.
+- Accessibility 관련 전부(AccessibilityPermission, AutoPasteOffer, ⌘V 합성,
+  Grant 메뉴 문자열)는 **직배포 전용 새 타깃 `vClipsAutoPaste`**의
+  `AccessibilityAutoPaste` 엔진으로 이동.
+- 엔트리포인트 주입: `Sources/vClips` → `AppEnvironment(autoPasteEngine:
+  AccessibilityAutoPaste())`, `Sources/vClipsAppStore` →
+  `AppEnvironment(autoPasteEngine: nil)` (기본값 없음 — fail-open 방지).
 
-UI는 환경 객체에서 플래그를 읽는다(`env.autoPasteCapable`). vClipsCore는 두
-실행 파일이 공유하는 단일 모듈이므로 컴파일 분기가 아닌 런타임 주입이 맞다.
+MAS 실행 파일에는 vClipsAutoPaste가 링크되지 않으므로 AX 심볼·문구의 부재가
+컨벤션이 아니라 링커 수준에서 보장된다. `scripts/appstore.sh`에 nm/strings
+게이트를 두어 회귀를 빌드 실패로 잡는다.
 
 ### 2. Paster 동작
 
-`Paster.paste(_:)`에서 `autoPasteCapable == false`일 때:
+`Paster.paste(_:)`는 항상 페이스트보드 복사 + `markSelfCopy()`를 수행한 뒤:
 
-- 지금처럼 페이스트보드 복사 + `markSelfCopy()`까지 수행하고,
-- 토스트를 표시(설정이 켜져 있으면)한 뒤 종료 — `AccessibilityPermission.isTrusted`
-  검사, `AutoPasteOffer`, CGEvent 합성이 **전부 실행되지 않는다**. 코드
-  경로가 도달 불가능하므로 권한 프롬프트가 뜰 방법 자체가 없다.
-
-`autoPasteCapable == true`일 때: 기존 동작 그대로. 단, 권한 미허용 폴백
-분기에서도 토스트를 표시한다 (1회성 AutoPasteOffer 이후의 침묵을 대체).
+- `engine == nil` (MAS): 토스트 표시(설정이 켜져 있으면) 후 종료 — AX 검사,
+  오퍼, 합성 코드가 이 바이너리에는 존재하지 않는다.
+- `engine != nil` (직배포): 기존 동작 — `isTrusted`면 120ms 후 ⌘V 합성
+  (합성 실패 시 토스트 폴백), 미허용이면 1회성 `offerIfNeeded()`가 발화하지
+  않은 경우에만 토스트.
 
 ### 3. CopyToast
 
@@ -84,9 +92,13 @@ UI는 환경 객체에서 플래그를 읽는다(`env.autoPasteCapable`). vClips
 
 ### 7. 검증
 
+- 바이너리 게이트: MAS 실행 파일에서 `nm -u | grep AXIsProcess` = 0,
+  `strings | grep -i accessib` = 0 (appstore.sh가 자동 검사); 직배포
+  실행 파일에는 두 값 모두 존재해야 한다(엔진이 실제로 링크됨).
 - MAS 번들 로컬 설치: AX 프롬프트·메뉴 항목이 어디에도 없음; 클립 선택 →
   복사 + 토스트; `tccutil reset Accessibility com.vclips.app` 후 재시험해도
   어떤 경로로도 권한 요청이 발생하지 않음.
 - 직배포 빌드: 자동 붙여넣기 회귀 확인(권한 허용 상태) + 미허용 폴백에서
-  토스트 확인.
-- 유닛: 플래그를 주입한 Paster 카피 전용 경로 (합성 시도 없음).
+  토스트 확인. 연속 빠른 복사 2회(토스트 재표시), 멀티 모니터에서 마우스
+  화면에 토스트 표시 확인.
+- 유닛: 엔진 유무를 주입한 Paster 결정 로직 (합성 시도 없음).

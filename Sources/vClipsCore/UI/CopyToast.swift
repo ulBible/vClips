@@ -74,12 +74,19 @@ final class CopyToast {
 
 private struct ToastLabel: View {
     let text: String
+    /// Brand blue (the incoming block in the Chakchak Works mark) — a solid,
+    /// saturated chip so the toast reads at a glance; the translucent
+    /// material version disappeared against busy backgrounds.
+    private static let brandBlue = Color(red: 0.16, green: 0.42, blue: 0.96)
+
     var body: some View {
         Text(text)
-            .font(.system(size: 12.5, weight: .medium))
+            .font(.system(size: 12.5, weight: .semibold))
+            .foregroundStyle(.white)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(.regularMaterial, in: Capsule())
-            .padding(8)   // room for the material's soft edge
+            .background(Self.brandBlue, in: Capsule())
+            .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
+            .padding(10)   // room for the shadow
     }
 }

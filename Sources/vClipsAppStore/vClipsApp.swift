@@ -8,7 +8,9 @@ import vClipsCore
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    let env = AppEnvironment()
+    // Copy-only on the App Store: guideline 2.4.5 disallows Accessibility-
+    // based paste synthesis, so this variant never offers auto-paste.
+    let env = AppEnvironment(autoPasteCapable: false)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         env.start()

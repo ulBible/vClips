@@ -10,8 +10,13 @@ public final class AppEnvironment: ObservableObject {
     private(set) var paster: Paster!
     private(set) var popup: PopupController!
     private(set) var viewModel: PopupViewModel!
+    /// false in the Mac App Store build: auto-paste (and every mention of
+    /// Accessibility) is compiled in but unreachable there. Injected from the
+    /// entry points, mirroring MenuContent/SettingsView's showsSupportLink.
+    public let autoPasteCapable: Bool
 
-    public init() {
+    public init(autoPasteCapable: Bool = true) {
+        self.autoPasteCapable = autoPasteCapable
         let container = try! ModelContainerFactory.onDisk()
         self.container = container
         let store = HistoryStore(container: container)
@@ -19,7 +24,7 @@ public final class AppEnvironment: ObservableObject {
         self.monitor = ClipboardMonitor { content in
             store.capture(content)
         }
-        self.paster = Paster(monitor: self.monitor)
+        self.paster = Paster(monitor: self.monitor, autoPasteCapable: autoPasteCapable)
 
         self.viewModel = PopupViewModel(store: store, onChoose: { [weak self] item in
             self?.choose(item)
@@ -28,6 +33,7 @@ public final class AppEnvironment: ObservableObject {
             guard let self else { return AnyView(EmptyView()) }
             return AnyView(PopupView(
                 model: self.viewModel,
+                pasteKeyHintLabel: autoPasteCapable ? "Paste" : "Copy",
                 onEscape: { self.popup.hide() },
                 onContentChange: { self.popup.resizeToFit() }
             ))

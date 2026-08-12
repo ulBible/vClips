@@ -44,7 +44,9 @@ public struct MenuContent: View {
         Button("About vClips") {
             AboutPanel.show(showsSupportLink: showsSupportLink)
         }
-        if !AccessibilityPermission.isTrusted {
+        // Hidden entirely in the MAS build; && short-circuits so the AX API
+        // is never queried there either.
+        if env.autoPasteCapable && !AccessibilityPermission.isTrusted {
             Divider()
             Button("Grant Accessibility (for auto-paste)…") {
                 AccessibilityPermission.openSettings()

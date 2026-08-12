@@ -25,13 +25,24 @@ final class CopyToast {
         let host = NSHostingView(rootView: ToastLabel(text: text))
         panel.contentView = host
         panel.setContentSize(host.fittingSize)
-        if let screen = NSScreen.main {
+        // The screen the user is looking at, not necessarily the one with the
+        // menu bar: NSScreen.main is only the key-window screen, and this
+        // panel never takes key.
+        let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
+            ?? NSScreen.main
+        if let screen {
             let area = screen.visibleFrame   // below the menu bar
             panel.setFrameOrigin(NSPoint(
                 x: area.midX - panel.frame.width / 2,
                 y: area.maxY - panel.frame.height - 12))
         }
-        panel.alphaValue = 1
+        // Through the animator, and not a plain assignment: a fade-out still
+        // in flight from the previous toast would otherwise overwrite the
+        // opacity a moment later and leave this one invisible.
+        NSAnimationContext.runAnimationGroup {
+            $0.duration = 0
+            panel.animator().alphaValue = 1
+        }
         panel.orderFrontRegardless()
 
         hideTask?.cancel()
@@ -42,7 +53,7 @@ final class CopyToast {
                 $0.duration = 0.25
                 panel.animator().alphaValue = 0
             }
-            try? await Task.sleep(for: .milliseconds(260))
+            // `await runAnimationGroup` already returned on completion.
             if !Task.isCancelled { panel.orderOut(nil) }
         }
     }

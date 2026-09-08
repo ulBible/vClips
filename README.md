@@ -5,6 +5,8 @@ summoned anywhere with ⌘⇧V and auto-pasted into the focused app.
 
 *A **Chakchak Works** app — small tools that snap right in.*
 
+→ https://chakchak.works/apps/vclips
+
 <p align="center">
   <img src="docs/images/popup.png" width="420" alt="vClips popup showing pinned and recent clipboard items with search and preview">
 </p>

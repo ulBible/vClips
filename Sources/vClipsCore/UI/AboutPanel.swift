@@ -112,6 +112,8 @@ public enum AboutPanel {
 
         let separator = NSAttributedString(string: "  ·  ", attributes: secondary)
         text.append(link("GitHub", "https://github.com/ulBible/vClips"))
+        text.append(separator)
+        text.append(link("Website", "https://chakchak.works/apps/vclips"))
         if showsSupportLink {
             text.append(separator)
             text.append(link("Support ❤️", SupportLinks.donation.absoluteString))
